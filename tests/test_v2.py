@@ -151,6 +151,12 @@ class RecallableEvictionTest(unittest.TestCase):
         call_ = ToolCallPart("bash", {"command": "report auth"}, tool_call_id="c")
         self.assertNotIn("p99_ms = 304", _stub("ev/x/1", call_, report))
         self.assertIn("p99_ms = 304", _stub("ev/x/1", call_, report, tail_lines=3))
+        # The terminal's footer must not eat the preview (it did in the first live run of this arm).
+        with_footer = report + "\n[exit code: 0 | 0.02s | cwd: /a/very/long/path/that/used/to/fill/the/preview/budget]"
+        stub = _stub("ev/x/1", call_, with_footer, tail_lines=3)
+        self.assertIn("p99_ms = 304", stub)
+        self.assertIn("exit 0", stub)
+        self.assertNotIn("cwd:", stub)
 
     def test_small_results_and_already_evicted_are_left_alone(self):
         msgs = _history(6, 100)  # ~25-token results: evicting them would not pay for the stub

@@ -31,6 +31,7 @@ arXiv 2606.17016). Pairing is never broken: calls stay in place, and only the co
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from dataclasses import dataclass, field, replace
 from typing import Any
@@ -41,6 +42,8 @@ from pydantic_ai.tools import RunContext
 from pydantic_ai_harness.tool_output_limits import LocalFileStore, OverflowStore
 
 READ_TOOL = "read_tool_result"
+FOOTER_PREFIXES = ("[exit code:", "[TIMEOUT", "[The shell", "Poll: tail")
+EXIT_FOOTER = re.compile(r"\[exit code: (\S+?)[ |\]]")
 STUB_PREFIX = "[evicted to handle "
 CLEARED_PLACEHOLDER = "[tool result cleared]"  # the prebuilt ClearToolResults placeholder, verbatim
 SPILL_PREFIX = "[Tool output too large ("  # ToolOutputLimits already stored this one; its preview carries the handle
@@ -273,14 +276,20 @@ def _stub(handle: str, call: ToolCallPart, text: str, *, tail_lines: int = 1) ->
         args = args[:117] + "..."
     lines = text.splitlines() or [""]
     first = lines[0][:80]
+    body = lines[1:]
+    exit_note = ""
+    # The terminal appends harness footers ("[exit code: 0 | 0.02s | cwd: /very/long/path]", timeout notes).
+    # They are the last lines of every bash result, so a tail preview that kept them would show the harness,
+    # not the output (measured: a 3-line preview spent itself on "END" and the footer's path).
+    while body and body[-1].startswith(FOOTER_PREFIXES):
+        m = EXIT_FOOTER.match(body.pop())
+        if m and not exit_note:
+            exit_note = f" · exit {m.group(1)}"
+    tail = [ln.strip() for ln in body if ln.strip()][-max(1, tail_lines):]
     last = ""
-    if len(lines) > 1:
-        if tail_lines <= 1:
-            last = f" · last: {lines[-1][:80]!r}"
-        else:
-            tail = [ln.strip() for ln in lines[1:] if ln.strip()][-tail_lines:]
-            last = f" · last {len(tail)} lines: {' ⏎ '.join(tail)[:240]!r}"
+    if tail:
+        last = f" · last: {tail[0][:80]!r}" if len(tail) == 1 else f" · last {len(tail)} lines: {' ⏎ '.join(tail)[:240]!r}"
     return (
-        f"{STUB_PREFIX}{handle!r}: {call.tool_name}({args}) · {len(lines)} lines, {len(text):,} chars · first: {first!r}{last}."
+        f"{STUB_PREFIX}{handle!r}: {call.tool_name}({args}) · {len(lines)} lines, {len(text):,} chars{exit_note} · first: {first!r}{last}."
         f" Exact text: read_tool_result(handle={handle!r}); optional pattern, offset, limit, from_end.]"
     )
