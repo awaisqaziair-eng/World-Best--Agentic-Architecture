@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "stack": "polymath-v2-terminal",
+    "label": "ultra-ret16k-polymath-v2-terminal",
+    "context_window": null,
+    "max_output_tokens": 16384,
+    "router": "heuristic",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "mode": "full",
+    "workers": 1,
+    "started": "2026-09-25T03:49:53+00:00",
+    "fallbacks": [],
+    "utility_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "n_tasks": 2,
+    "repeat": 2,
+    "wall_s": 5062.3
+  },
+  "summary": {
+    "overall": {
+      "n": 4,
+      "passed": 2,
+      "pass_rate": 0.5,
+      "median_turns": 17.0,
+      "median_tokens": 176445,
+      "total_tokens": 780683,
+      "median_wall_s": 898.1
+    },
+    "by_category": {
+      "retention": {
+        "n": 4,
+        "passed": 2,
+        "pass_rate": 0.5,
+        "median_turns": 17.0,
+        "median_tokens": 176445,
+        "total_tokens": 780683,
+        "median_wall_s": 898.1
+      }
+    }
+  },
+  "records": [
+    {
+      "task": "ret-token-audit",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 11,
+      "input_tokens": 170969,
+      "output_tokens": 929,
+      "duration_s": 239.6,
+      "answer": "Done. The `report.json` has been created with the audit token and p99 latencies for all 6 services:\n\n- **Token**: `AT-DF15DF597A26`\n- **p99_ms**:\n  - auth: 304ms\n  - billing: 355ms\n  - catalog: 333ms\n  - notifications: 422ms\n  - orders: 658ms\n  - payments: 518ms",
+      "error": null,
+      "extra": {
+        "ledger_injections": 0
+      },
+      "passed": false,
+      "detail": "p99_ms[checkout]: expected 282, got None; p99_ms[search]: expected 626, got None; p99_ms[notify]: expected 796, got None \u00b7 tokens issued: 1",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 241.5
+    },
+    {
+      "task": "ret-rename-changes",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 23,
+      "input_tokens": 177672,
+      "output_tokens": 3277,
+      "duration_s": 850.4,
+      "answer": "Done. All references to `legacy_total` have been renamed to `compute_total` across 8 Python files, and the tests pass.",
+      "error": null,
+      "extra": {
+        "ledger_injections": 0
+      },
+      "passed": true,
+      "detail": "5 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 850.6
+    },
+    {
+      "task": "ret-token-audit",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 2,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 11,
+      "input_tokens": 171010,
+      "output_tokens": 932,
+      "duration_s": 945.6,
+      "answer": "Done. The `report.json` has been created with the audit token and p99 latencies for all 6 services:\n\n- **Token**: `AT-E71BC580A1B0`\n- **p99_ms**: auth=304, billing=355, catalog=333, notifications=422, orders=658, payments=518",
+      "error": null,
+      "extra": {
+        "ledger_injections": 0
+      },
+      "passed": false,
+      "detail": "p99_ms[checkout]: expected 282, got None; p99_ms[search]: expected 626, got None; p99_ms[notify]: expected 796, got None \u00b7 tokens issued: 1",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 945.6
+    },
+    {
+      "task": "ret-rename-changes",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 2,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 31,
+      "input_tokens": 253029,
+      "output_tokens": 2865,
+      "duration_s": 3024.5,
+      "answer": "Done. I've renamed `legacy_total` to `compute_total` across all 8 Python files in the `pkg/` directory and verified the tests pass.\n\n**Summary of changes:**\n- `pkg/core.py` - Renamed the function definition\n- `pkg/mod_01.py` - Updated call to `core.compute_total`\n- `pkg/mod_02.py` - Updated call to `core.compute_total`\n- `pkg/mod_04.py` - Updated call to `core.compute_total`\n- `pkg/mod_05.py` - Updated call to `core.compute_total`\n- `pkg/mod_07.py` - Updated call to `core.compute_total`\n- `pkg/mod_09.py` - Updated `getattr(core, \"legacy_total\")` to `getattr(core, \"compute_total\")`\n- `pkg/mod_1",
+      "error": null,
+      "extra": {
+        "ledger_injections": 0
+      },
+      "passed": true,
+      "detail": "5 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 3024.6
+    }
+  ]
+}

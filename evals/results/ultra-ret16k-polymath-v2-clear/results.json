@@ -1,0 +1,178 @@
+{
+  "meta": {
+    "stack": "polymath-v2-clear",
+    "label": "ultra-ret16k-polymath-v2-clear",
+    "context_window": null,
+    "max_output_tokens": 16384,
+    "router": "heuristic",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "mode": "full",
+    "workers": 1,
+    "started": "2026-09-25T03:49:53+00:00",
+    "fallbacks": [],
+    "utility_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "n_tasks": 2,
+    "repeat": 2,
+    "wall_s": 2629.1
+  },
+  "summary": {
+    "overall": {
+      "n": 4,
+      "passed": 4,
+      "pass_rate": 1.0,
+      "median_turns": 12.5,
+      "median_tokens": 219322,
+      "total_tokens": 893296,
+      "median_wall_s": 166.25
+    },
+    "by_category": {
+      "retention": {
+        "n": 4,
+        "passed": 4,
+        "pass_rate": 1.0,
+        "median_turns": 12.5,
+        "median_tokens": 219322,
+        "total_tokens": 893296,
+        "median_wall_s": 166.25
+      }
+    }
+  },
+  "records": [
+    {
+      "task": "ret-token-audit",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 11,
+      "input_tokens": 214011,
+      "output_tokens": 1052,
+      "duration_s": 172.1,
+      "answer": "Done. The `report.json` has been created with the audit token and p99 latency for all 6 services:\n\n- **Token**: `AT-BE33DB177FC1`\n- **p99_ms**: auth=304, billing=355, catalog=333, checkout=282, search=626, notify=796",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 5,
+          "evicted_tokens": 12697,
+          "eviction_batches": 5,
+          "recalls": 0,
+          "re_reads": 0,
+          "repeat_commands": 0,
+          "redundant_calls": 0,
+          "thrash_events": 0,
+          "peak_estimated_tokens": 14382,
+          "reacquisitions": 0
+        },
+        "ledger_injections": 0
+      },
+      "passed": true,
+      "detail": "9 checks passed \u00b7 tokens issued: 1",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 173.9
+    },
+    {
+      "task": "ret-rename-changes",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 14,
+      "input_tokens": 220989,
+      "output_tokens": 2440,
+      "duration_s": 125.9,
+      "answer": "Done. Here's a summary of the changes:\n\n**Modified files (8):**\n- `pkg/core.py` - renamed `legacy_total` to `compute_total`\n- `pkg/mod_01.py` - updated reference to `core.compute_total`\n- `pkg/mod_02.py` - updated reference to `core.compute_total`\n- `pkg/mod_04.py` - updated reference to `core.compute_total`\n- `pkg/mod_05.py` - updated reference to `core.compute_total`\n- `pkg/mod_07.py` - updated reference to `core.compute_total`\n- `pkg/mod_09.py` - updated string reference in `getattr(core, \"compute_total\")`\n- `pkg/mod_11.py` - updated reference to `core.compute_total`\n\n**Test result:** All t",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 13,
+          "evicted_tokens": 17660,
+          "eviction_batches": 5,
+          "recalls": 0,
+          "re_reads": 7,
+          "repeat_commands": 0,
+          "redundant_calls": 2,
+          "thrash_events": 2,
+          "peak_estimated_tokens": 14426,
+          "reacquisitions": 7
+        },
+        "ledger_injections": 0
+      },
+      "passed": true,
+      "detail": "5 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 126.1
+    },
+    {
+      "task": "ret-token-audit",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 2,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 11,
+      "input_tokens": 214107,
+      "output_tokens": 1109,
+      "duration_s": 158.6,
+      "answer": "Done. The audit report has been created at `report.json` with:\n\n- **Token**: `AT-85D4E02A4D7F` (from `issue_token.py`)\n- **p99 latencies** (from each service's `metrics_report.py` SUMMARY):\n  - auth: 304ms\n  - billing: 355ms\n  - catalog: 333ms\n  - checkout: 282ms\n  - search: 626ms\n  - notify: 796ms",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 5,
+          "evicted_tokens": 12694,
+          "eviction_batches": 5,
+          "recalls": 0,
+          "re_reads": 0,
+          "repeat_commands": 0,
+          "redundant_calls": 0,
+          "thrash_events": 0,
+          "peak_estimated_tokens": 14392,
+          "reacquisitions": 0
+        },
+        "ledger_injections": 0
+      },
+      "passed": true,
+      "detail": "9 checks passed \u00b7 tokens issued: 1",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 158.6
+    },
+    {
+      "task": "ret-rename-changes",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 2,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 18,
+      "input_tokens": 237087,
+      "output_tokens": 2501,
+      "duration_s": 2170.5,
+      "answer": "Done. Here's a summary of the changes:\n\n**Renamed `legacy_total` to `compute_total`** in `pkg/core.py` and updated all references across 7 module files:\n\n1. **pkg/core.py** - Function definition renamed\n2. **pkg/mod_01.py** - Updated `core.legacy_total` \u2192 `core.compute_total`\n3. **pkg/mod_02.py** - Updated `core.legacy_total` \u2192 `core.compute_total`\n4. **pkg/mod_04.py** - Updated `core.legacy_total` \u2192 `core.compute_total`\n5. **pkg/mod_05.py** - Updated `core.legacy_total` \u2192 `core.compute_total`\n6. **pkg/mod_07.py** - Updated `core.legacy_total` \u2192 `core.compute_total`\n7. **pkg/mod_09.py** - Upda",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 13,
+          "evicted_tokens": 17660,
+          "eviction_batches": 5,
+          "recalls": 0,
+          "re_reads": 7,
+          "repeat_commands": 0,
+          "redundant_calls": 1,
+          "thrash_events": 2,
+          "peak_estimated_tokens": 15376,
+          "reacquisitions": 7
+        },
+        "ledger_injections": 0
+      },
+      "passed": true,
+      "detail": "5 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 2170.6
+    }
+  ]
+}

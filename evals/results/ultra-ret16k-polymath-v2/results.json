@@ -1,0 +1,178 @@
+{
+  "meta": {
+    "stack": "polymath-v2",
+    "label": "ultra-ret16k-polymath-v2",
+    "context_window": null,
+    "max_output_tokens": 16384,
+    "router": "heuristic",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "mode": "full",
+    "workers": 1,
+    "started": "2026-09-25T03:49:53+00:00",
+    "fallbacks": [],
+    "utility_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "n_tasks": 2,
+    "repeat": 2,
+    "wall_s": 4372.5
+  },
+  "summary": {
+    "overall": {
+      "n": 4,
+      "passed": 4,
+      "pass_rate": 1.0,
+      "median_turns": 18.0,
+      "median_tokens": 357784,
+      "total_tokens": 1355402,
+      "median_wall_s": 914.95
+    },
+    "by_category": {
+      "retention": {
+        "n": 4,
+        "passed": 4,
+        "pass_rate": 1.0,
+        "median_turns": 18.0,
+        "median_tokens": 357784,
+        "total_tokens": 1355402,
+        "median_wall_s": 914.95
+      }
+    }
+  },
+  "records": [
+    {
+      "task": "ret-token-audit",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 18,
+      "input_tokens": 518509,
+      "output_tokens": 1677,
+      "duration_s": 269.5,
+      "answer": "Done. The audit is complete and `report.json` has been written with:\n\n- **Token**: `AT-707E14E9A09B` (from the single `issue_token.py` run)\n- **p99_ms** for each service (from the SUMMARY section of each `metrics_report.py` run):\n  - auth: 304ms\n  - billing: 355ms\n  - catalog: 333ms\n  - checkout: 282ms\n  - search: 626ms\n  - notify: 796ms",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 7,
+          "evicted_tokens": 16819,
+          "eviction_batches": 7,
+          "recalls": 7,
+          "re_reads": 0,
+          "repeat_commands": 0,
+          "redundant_calls": 0,
+          "thrash_events": 2,
+          "peak_estimated_tokens": 22698,
+          "reacquisitions": 7
+        },
+        "ledger_injections": 13
+      },
+      "passed": true,
+      "detail": "9 checks passed \u00b7 tokens issued: 1",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 271.5
+    },
+    {
+      "task": "ret-rename-changes",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 16,
+      "input_tokens": 117658,
+      "output_tokens": 1619,
+      "duration_s": 183.9,
+      "answer": "Done. I renamed `legacy_total` to `compute_total` in `pkg/core.py` and updated all 7 references across the pkg/ modules (including the indirect string reference in `mod_09.py` via `getattr`). All tests pass.\n\n**Modified files:**\n- pkg/core.py\n- pkg/mod_01.py\n- pkg/mod_02.py\n- pkg/mod_04.py\n- pkg/mod_05.py\n- pkg/mod_07.py\n- pkg/mod_09.py\n- pkg/mod_11.py\n\n**Test result:** `python -m pytest tests/ -v` \u2192 1 passed in 0.01s",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 7,
+          "evicted_tokens": 9101,
+          "eviction_batches": 3,
+          "recalls": 0,
+          "re_reads": 0,
+          "repeat_commands": 0,
+          "redundant_calls": 0,
+          "thrash_events": 0,
+          "peak_estimated_tokens": 11571,
+          "reacquisitions": 0
+        },
+        "ledger_injections": 11
+      },
+      "passed": true,
+      "detail": "5 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 184.1
+    },
+    {
+      "task": "ret-token-audit",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 2,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 18,
+      "input_tokens": 518945,
+      "output_tokens": 1611,
+      "duration_s": 1558.3,
+      "answer": "Done. The `report.json` has been created with the audit token and p99 latency values for all 6 services:\n\n- **Token**: AT-9043544DE843\n- **p99_ms**: auth=304, billing=355, catalog=333, checkout=282, search=626, notify=796",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 7,
+          "evicted_tokens": 16824,
+          "eviction_batches": 7,
+          "recalls": 7,
+          "re_reads": 0,
+          "repeat_commands": 0,
+          "redundant_calls": 0,
+          "thrash_events": 2,
+          "peak_estimated_tokens": 22605,
+          "reacquisitions": 7
+        },
+        "ledger_injections": 13
+      },
+      "passed": true,
+      "detail": "9 checks passed \u00b7 tokens issued: 1",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 1558.4
+    },
+    {
+      "task": "ret-rename-changes",
+      "category": "retention",
+      "difficulty": "medium",
+      "repeat": 2,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 26,
+      "input_tokens": 193177,
+      "output_tokens": 2206,
+      "duration_s": 2358.5,
+      "answer": "Done. I've renamed `legacy_total` to `compute_total` in `pkg/core.py` and updated all 7 references across the pkg/ modules (including the indirect string reference in `pkg/mod_09.py`). All tests pass.",
+      "error": null,
+      "extra": {
+        "recall": {
+          "evictions": 7,
+          "evicted_tokens": 9101,
+          "eviction_batches": 7,
+          "recalls": 0,
+          "re_reads": 0,
+          "repeat_commands": 0,
+          "redundant_calls": 2,
+          "thrash_events": 0,
+          "peak_estimated_tokens": 10872,
+          "reacquisitions": 0
+        },
+        "ledger_injections": 15
+      },
+      "passed": true,
+      "detail": "5 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 2358.5
+    }
+  ]
+}
