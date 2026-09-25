@@ -127,10 +127,11 @@ class Runtime:
             agent.close()
             log.close()
 
-    def resume(self, session_id: str) -> RunResult:
+    def resume(self, session_id: str, *, budget: Budget | None = None) -> RunResult:
+        """Continue an interrupted or failed session (see ``Agent.resume`` for the rules)."""
         log = self.open_session(session_id)
         try:
-            return Agent.resume(self, log)
+            return Agent.resume(self, log, budget=budget)
         finally:
             log.close()
 

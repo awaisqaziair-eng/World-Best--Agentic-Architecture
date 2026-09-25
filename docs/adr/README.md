@@ -11,5 +11,6 @@
 | [ADR-007](ADR-007-explicit-finish-and-verification.md) | Explicit `finish` + verification loop; accept final-looking prose | Accepted (amended v1.1) |
 | [ADR-008](ADR-008-exact-string-edits.md) | Exact-string file edits with closest-match errors | Accepted |
 | [ADR-009](ADR-009-measured-harness-overhead.md) | Harness features must pay for their tokens (v1.1 overhead reductions) | Accepted |
+| [ADR-010](ADR-010-streaming-idle-timeouts.md) | Stream every model call; idle timeouts instead of total timeouts | Accepted |
 
 Format: Context → Decision → Alternatives considered → Consequences → Evidence.

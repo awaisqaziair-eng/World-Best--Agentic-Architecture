@@ -79,7 +79,10 @@ def cmd_chat(args: argparse.Namespace) -> int:
 
 def cmd_resume(args: argparse.Namespace) -> int:
     rt = _runtime(args)
-    return _print_result(rt.resume(args.session), args.json)
+    budget = None
+    if args.max_turns or args.max_time:
+        budget = Budget(args.max_turns or rt.cfg.max_turns, rt.cfg.max_tokens, args.max_time or rt.cfg.max_wall_s, rt.cfg.max_tool_calls)
+    return _print_result(rt.resume(args.session, budget=budget), args.json)
 
 
 def cmd_replay(args: argparse.Namespace) -> int:
@@ -175,8 +178,10 @@ def build_parser() -> argparse.ArgumentParser:
     model_opts(c)
     c.set_defaults(fn=cmd_chat)
 
-    rs = sub.add_parser("resume", help="resume an interrupted session")
+    rs = sub.add_parser("resume", help="resume an interrupted or failed session")
     rs.add_argument("session")
+    rs.add_argument("--max-turns", type=int, help="new turn budget (required to resume a budget-exhausted run)")
+    rs.add_argument("--max-time", type=float, help="new wall-clock budget in seconds")
     rs.add_argument("--json", action="store_true")
     model_opts(rs)
     rs.set_defaults(fn=cmd_resume)

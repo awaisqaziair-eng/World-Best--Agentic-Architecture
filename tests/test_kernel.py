@@ -153,6 +153,43 @@ class TestKernel(TempDirTest):
         self.assertEqual(again.answer, "resumed ok")
         self.assertEqual((self.ws / "marker.txt").read_text(), "resumed\n")
 
+    def test_resume_after_model_error_continues(self):
+        # Regression (found live): a run killed by a provider outage must be resumable.
+        rt, _ = self.runtime([bash("echo step1 > s.txt"), ModelError("HTTP 500 x7", kind=RETRY_EXHAUSTED)])
+        res = rt.run("x", self.ws, session_id="outage")
+        self.assertEqual((res.state, res.stop_reason), ("failed", "model_error"))
+        rt2, cl2 = self.runtime([finish("recovered")])
+        res2 = rt2.resume("outage")
+        self.assertEqual((res2.state, res2.answer, res2.turns), ("completed", "recovered", 2))
+        self.assertEqual([m.role for m in cl2.requests[0].messages][-2:], ["assistant", "tool"])  # context intact
+
+    def test_budget_exhausted_needs_new_budget_to_resume(self):
+        rt, _ = self.runtime([bash("echo 1"), finish("partial")])
+        res = rt.run("x", self.ws, budget=Budget(max_turns=1), session_id="tight")
+        self.assertEqual(res.stop_reason, "budget_exhausted")
+        rt2, cl2 = self.runtime([finish("done with more budget")])
+        self.assertEqual(rt2.resume("tight").stop_reason, "budget_exhausted")  # no new budget: unchanged
+        self.assertEqual(cl2.requests, [])
+        self.assertEqual(rt2.resume("tight", budget=Budget(max_turns=10)).answer, "done with more budget")
+
+    def test_resume_excludes_downtime_from_wall_budget(self):
+        import json as _json
+        import time as _time
+
+        d = self.tmp / "home" / "sessions" / "old"
+        d.mkdir(parents=True)
+        t0 = _time.time() - 7200  # the process died two hours ago
+        task = TaskSpec("x", str(self.ws), budget=Budget(max_wall_s=600))
+        evs = [
+            {"seq": 1, "ts": t0, "type": ev.TASK_SUBMITTED, "agent": "main", "data": {"task": task.to_dict(), "system_prompt": "S"}},
+            {"seq": 2, "ts": t0 + 1, "type": ev.MESSAGE_USER, "agent": "main", "data": {"content": "T", "source": "task"}},
+        ]
+        (d / "events.jsonl").write_text("".join(_json.dumps(e) + "\n" for e in evs))
+        rt, _ = self.runtime([finish("fine")])
+        res = rt.resume("old")
+        self.assertEqual((res.state, res.answer), ("completed", "fine"))
+        self.assertLess(res.duration_s, 60)
+
     def test_delegation_runs_parallel_subagents(self):
         def script(req: ChatRequest) -> ModelResponse:
             sys = req.messages[0].content

@@ -61,6 +61,8 @@ if TYPE_CHECKING:
     from .runtime import Runtime
 
 STOP_UNVERIFIED = "finished_unverified"
+# Failures that a later attempt can plausibly get past (provider outage, flaky model, crashed child).
+RESUMABLE_STOPS = frozenset({STOP_MODEL_ERROR, STOP_NO_PROGRESS, "crash"})
 
 _INTENT_TAIL = re.compile(
     r"(let me|let's|i['’]ll|i will|i am going to|i['’]m going to|i need to|next,? i|now i|first,? i|i['’]m now)\b[^\n]*$",
@@ -150,7 +152,7 @@ class Agent:
         )
         self.context = ContextEngine(
             window_tokens=self.cfg.window_for(self.client.model),
-            max_output_tokens=self.cfg.max_output_tokens,
+            max_output_tokens=self.cfg.max_output_for(self.client.model),
             clear_at=self.cfg.clear_at,
             compact_at=self.cfg.compact_at,
             keep_recent_tool_results=self.cfg.keep_recent_tool_results,
@@ -176,6 +178,8 @@ class Agent:
         self._empty_turns = 0
         self._verify_round = 0
         self._budget_warned = False
+        self._wall_offset = 0.0  # active seconds before this process took over (resume)
+        self._wall_start: float | None = None  # None → measure from the session's first event
 
     # ── public API ──────────────────────────────────────────────────────
     def run(self, task: TaskSpec) -> RunResult:
@@ -227,20 +231,37 @@ class Agent:
         return self._loop()
 
     @classmethod
-    def resume(cls, rt: "Runtime", log: EventLog, *, agent_id: str = "main", **kw: Any) -> RunResult:
+    def resume(cls, rt: "Runtime", log: EventLog, *, agent_id: str = "main", budget: Budget | None = None, **kw: Any) -> RunResult:
+        """Continue a session.
+
+        * completed                          → idempotent: return the recorded result
+        * failed (model_error/no_progress/crash) or no terminal event (process died) → continue
+        * failed (budget_exhausted)          → continue only when a new ``budget`` is supplied
+        """
         st = project(log.events(agent=agent_id), agent_id)
         if st.task is None:
             raise ValueError(f"session {log.session_id} has no task for agent {agent_id}")
-        if st.completed is not None and st.state in (COMPLETED, FAILED):
-            return _result_from_dict(st.completed)
+        if st.completed is not None:
+            stop = st.completed.get("stop_reason")
+            if st.completed.get("state") == COMPLETED or (stop == STOP_BUDGET and budget is None) or stop not in RESUMABLE_STOPS | {STOP_BUDGET}:
+                return _result_from_dict(st.completed)
         agent = cls(rt, log=log, workspace=st.task["workspace"], agent_id=agent_id, depth=agent_id.count("."), **kw)
         agent.task = TaskSpec.from_dict(st.task)
+        if budget is not None:
+            agent.task.budget = budget
         submitted = log.last(ev.TASK_SUBMITTED, agent=agent_id)
         if submitted and submitted.data.get("system_prompt"):
             agent.system = Message("system", submitted.data["system_prompt"])  # exact prompt of the original run
         agent.ctx.state["plan"] = st.plan
+        # Wall-clock budget counts active time only: downtime between crash and resume is excluded.
+        agent._wall_offset = (st.last_ts - st.first_ts) if (st.first_ts and st.last_ts) else 0.0
+        agent._wall_start = time.time()
         pending = st.pending_tool_calls()
-        log.append(ev.HARNESS_NOTE, {"kind": "resumed", "detail": f"re-executing {len(pending)} pending tool call(s)"}, agent=agent_id)
+        log.append(
+            ev.HARNESS_NOTE,
+            {"kind": "resumed", "detail": f"after {st.completed.get('stop_reason') if st.completed else 'interruption'}; re-executing {len(pending)} pending tool call(s)"},
+            agent=agent_id,
+        )
         try:
             if pending:
                 agent._execute(pending)
@@ -443,7 +464,7 @@ class Agent:
             usage=usage_tree(self.log, self.agent_id),
             turns=st.turns,
             tool_calls=st.tool_calls,
-            duration_s=(time.time() - st.first_ts) if st.first_ts else 0.0,
+            duration_s=self._active_seconds(st),
             verification=[Verification(**v) for v in st.verifications],
             error=error,
             models_used=st.models_used,
@@ -457,7 +478,7 @@ class Agent:
         assert self.task is not None
         b: Budget = self.task.budget
         tokens = usage_tree(self.log, self.agent_id).total
-        wall = time.time() - st.first_ts if st.first_ts else 0.0
+        wall = self._active_seconds(st)
         if st.turns >= b.max_turns:
             return f"Turn budget exhausted ({st.turns}/{b.max_turns} turns)"
         if st.tool_calls >= b.max_tool_calls:
@@ -476,6 +497,11 @@ class Agent:
                     "harness",
                 )
         return None
+
+    def _active_seconds(self, st: Any) -> float:
+        if self._wall_start is not None:
+            return self._wall_offset + (time.time() - self._wall_start)
+        return (time.time() - st.first_ts) if st.first_ts else 0.0
 
     # ── sub-agents ──────────────────────────────────────────────────────
     def _spawn_subagents(self, specs: list[dict[str, Any]]) -> list[RunResult]:

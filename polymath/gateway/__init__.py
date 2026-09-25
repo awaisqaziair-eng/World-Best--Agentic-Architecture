@@ -34,9 +34,11 @@ def build_client(
             retry_base_s=cfg.retry_base_s,
             retry_cap_s=cfg.retry_cap_s,
             default_temperature=cfg.temperature_for(m),
-            default_max_tokens=cfg.max_output_tokens,
+            default_max_tokens=cfg.max_output_for(m),
             extra_body=params.get("extra_body"),
             send_reasoning_back=cfg.send_reasoning_back,
+            stream=params.get("stream", cfg.stream),
+            max_request_s=cfg.max_request_s,
             **client_kw,
         )
 

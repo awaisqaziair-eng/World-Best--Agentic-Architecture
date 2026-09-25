@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "polymath-agent"
-version = "1.0.0"
+version = "1.2.0"
 description = "Polymath: a generalist agent harness — event-sourced, resumable, replayable, with a persistent terminal."
 readme = "README.md"
 requires-python = ">=3.11"

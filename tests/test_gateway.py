@@ -179,6 +179,73 @@ class TestHTTPClient(unittest.TestCase):
         self.assertEqual((u.input_tokens, u.output_tokens, u.cached_tokens), (100, 5, 80))
 
 
+def sse(*chunks: dict, done: bool = True) -> list[bytes]:
+    out = [b": keep-alive\n"]
+    for c in chunks:
+        out += [b"data: " + json.dumps(c).encode() + b"\n", b"\n"]
+    if done:
+        out.append(b"data: [DONE]\n")
+    return out
+
+
+class TestStreaming(unittest.TestCase):
+    def test_assembles_content_reasoning_and_split_tool_args(self):
+        chunks = sse(
+            {"id": "x", "model": "m", "choices": [{"delta": {"reasoning_content": "think "}}]},
+            {"choices": [{"delta": {"reasoning_content": "more"}}]},
+            {"choices": [{"delta": {"content": "Running "}}]},
+            {"choices": [{"delta": {"content": "it."}}]},
+            {"choices": [{"delta": {"tool_calls": [{"index": 0, "id": "c1", "function": {"name": "bash", "arguments": '{"comm'}}]}}]},
+            {"choices": [{"delta": {"tool_calls": [{"index": 0, "function": {"arguments": 'and": "ls"}'}}]}}]},
+            {"choices": [{"delta": {"tool_calls": [{"index": 1, "id": "c2", "function": {"name": "read_file", "arguments": '{"path": "a"}'}}]}}]},
+            {"choices": [{"delta": {}, "finish_reason": "tool_calls"}]},
+            {"choices": [], "usage": {"prompt_tokens": 50, "completion_tokens": 7}},
+        )
+        c, _ = client(Seq([(200, {}, iter(chunks))]), stream=True)
+        r = c.complete(REQ)
+        self.assertEqual((r.content, r.reasoning, r.finish_reason), ("Running it.", "think more", "tool_calls"))
+        self.assertEqual([(t.id, t.name, t.arguments) for t in r.tool_calls], [("c1", "bash", {"command": "ls"}), ("c2", "read_file", {"path": "a"})])
+        self.assertEqual((r.usage.input_tokens, r.usage.output_tokens), (50, 7))
+
+    def test_request_body_asks_for_stream_and_usage(self):
+        t = Seq([(200, {}, iter(sse({"choices": [{"delta": {"content": "ok"}}]})))])
+        c, _ = client(t, stream=True)
+        c.complete(REQ)
+        self.assertTrue(t.bodies[0]["stream"])
+        self.assertEqual(t.bodies[0]["stream_options"], {"include_usage": True})
+
+    def test_stream_options_rejection_is_sticky_fallback(self):
+        t = Seq([(400, {}, b'{"error": "unknown field stream_options"}'), (200, {}, iter(sse({"choices": [{"delta": {"content": "ok"}}]}))), (200, {}, iter(sse({"choices": [{"delta": {"content": "ok2"}}]})))])
+        c, sleeps = client(t, stream=True)
+        self.assertEqual(c.complete(REQ).content, "ok")
+        self.assertNotIn("stream_options", t.bodies[1])
+        c.complete(REQ)
+        self.assertNotIn("stream_options", t.bodies[2])
+        self.assertEqual(sleeps, [])
+
+    def test_broken_stream_is_retried(self):
+        def broken():
+            yield from sse({"choices": [{"delta": {"content": "par"}}]}, done=False)
+            raise TransportError("stream interrupted: connection reset")
+
+        t = Seq([(200, {}, broken()), (200, {}, iter(sse({"choices": [{"delta": {"content": "full"}}]})))])
+        c, sleeps = client(t, stream=True)
+        r = c.complete(REQ)
+        self.assertEqual((r.content, r.attempts), ("full", 2))
+        self.assertEqual(len(sleeps), 1)
+
+    def test_error_event_and_empty_stream_are_retried(self):
+        t = Seq([(200, {}, iter(sse({"error": {"message": "overloaded"}}))), (200, {}, iter([b"data: [DONE]\n"])), (200, {}, iter(sse({"choices": [{"delta": {"content": "ok"}}]})))])
+        c, _ = client(t, stream=True)
+        self.assertEqual(c.complete(REQ).attempts, 3)
+
+    def test_sse_bytes_and_plain_json_both_accepted(self):
+        body = b"".join(sse({"choices": [{"delta": {"content": "from bytes"}}]}))
+        c, _ = client(Seq([(200, {}, body), (200, {}, ok_body({"content": "plain"}))]), stream=True)
+        self.assertEqual(c.complete(REQ).content, "from bytes")
+        self.assertEqual(c.complete(REQ).content, "plain")  # server ignored stream=true
+
+
 class Failing:
     def __init__(self, model, kind):
         self.model, self.kind, self.calls = model, kind, 0

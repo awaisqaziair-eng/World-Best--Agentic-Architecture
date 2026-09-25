@@ -27,14 +27,18 @@ flowchart TB
 | `usage` | `prompt_tokens`, `completion_tokens`, `prompt_tokens_details.cached_tokens` |
 | wire messages | consecutive user messages merged (many chat templates reject them); tool-call arguments re-serialised from parsed dicts (some servers re-parse them) |
 
-## 3. Retry policy
+## 3. Streaming (v1.2, [ADR-010](adr/ADR-010-streaming-idle-timeouts.md))
+
+Every request is sent with `stream: true` and `stream_options.include_usage`. The socket timeout applies to each read, so `request_timeout_s` (240 s) is an **idle** timeout; `max_request_s` (900 s) caps the total. SSE deltas are assembled into one response: content and reasoning concatenated, tool calls merged by `index` (id and name arrive once, arguments in fragments), usage from the final chunk. Keep-alive comments are ignored; error events, empty streams and broken connections are retried; servers that reject `stream_options` or ignore `stream` are handled transparently. Only the assembled response is journaled.
+
+## 4. Retry policy
 
 ```text
 retryable := HTTP {408, 409, 425, 429, 500, 502, 503, 504, 520, 522, 524}
            | transport error (timeout, reset, DNS) | 200 with malformed/empty choices
 delay(attempt) := Retry-After (if present, capped)            else
                   uniform(0.25·c, c),  c = min(cap, base·2^(attempt-1))     # jittered exponential
-defaults: base 1.5 s, cap 45 s, max_retries 6, request timeout 240 s
+defaults: base 1.5 s, cap 45 s, max_retries 6, idle timeout 240 s (streaming), total cap 900 s
 ```
 
 | Error | Kind | Retried here | Fails over |
@@ -46,17 +50,17 @@ defaults: base 1.5 s, cap 45 s, max_retries 6, request timeout 240 s
 | 401/403 | `auth` | ❌ | ✅ |
 | 404 (model not deployed) | `not_found` | ❌ | ✅ |
 
-## 4. Fail-over and circuit breakers
+## 5. Fail-over and circuit breakers
 
 `FallbackClient([primary, fb1, fb2])` tries healthy clients in order. Each has a breaker: **closed** → after `breaker_failures` (3) consecutive fail-over-class errors → **open** for `breaker_cooldown_s` (90 s, skipped) → **half-open** (one trial). If every breaker is open, the one closing soonest is still tried: an agent run is worth one more attempt. Defaults: primary `z-ai/glm-5.3`, fallbacks `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nemotron-3-ultra-550b-a55b`; utility `nvidia/nemotron-3.5-lightning-30b-a3b` (falls back to the primary).
 
-## 5. Tool-call protocols
+## 6. Tool-call protocols
 
 - **Native** (default): OpenAI `tools` / `tool_calls`.
 - **Text**: the tool catalogue and a strict `<tool_call>{json}</tool_call>` format are appended to the system prompt (or injected as one if absent); results return as `<tool_result id= name=>` blocks in a user message. Works with any instruction-following model.
 - **Auto** (default mode): start native; if the endpoint rejects `tools`, switch to text for that client (sticky) and retry.
 
-## 6. NIM model matrix (probed 2026-09-24)
+## 7. NIM model matrix (probed 2026-09-24)
 
 82 models listed at `integrate.api.nvidia.com/v1/models`. Tool-calling probe (one request, native tools, a shell-count question):
 
@@ -77,7 +81,7 @@ defaults: base 1.5 s, cap 45 s, max_retries 6, request timeout 240 s
 
 Latency on a shared endpoint varies strongly with load: during the v1 eval (4 concurrent sessions) GLM-5.3 showed p50 5.2 s, p90 35 s, max 213 s per call; 2 % of calls needed 3–5 attempts; one Nemotron-3-Super session hit seven consecutive HTTP 500s (with fail-over disabled for a clean measurement) — exactly the case fail-over and `resume` exist for.
 
-## 7. Deterministic clients
+## 8. Deterministic clients
 
 | Client | Use |
 |---|---|

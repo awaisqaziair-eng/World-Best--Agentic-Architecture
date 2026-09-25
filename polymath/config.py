@@ -18,7 +18,8 @@ NIM_BASE_URL = "https://integrate.api.nvidia.com/v1"
 
 # Per-model knobs discovered empirically on NVIDIA NIM (see docs/evaluation).
 DEFAULT_MODEL_PARAMS: dict[str, dict[str, Any]] = {
-    "z-ai/glm-5.3": {"temperature": 0.3, "context_window": 200_000},
+    # GLM-5.3 reasons at length (measured: a 6k-token budget spent entirely on reasoning) → larger output budget.
+    "z-ai/glm-5.3": {"temperature": 0.3, "context_window": 200_000, "max_output_tokens": 32_768},
     "z-ai/glm-5.3-flash": {"temperature": 0.3, "context_window": 200_000},
     "moonshotai/kimi-k3": {"temperature": 0.6, "context_window": 256_000},
     "nvidia/nemotron-3-ultra-550b-a55b": {"temperature": 0.3, "context_window": 256_000},
@@ -42,7 +43,9 @@ class Config:
     tool_protocol: str = "auto"  # auto | native | text
     temperature: float | None = None  # None → per-model default
     max_output_tokens: int = 16_384
+    stream: bool = True  # SSE streaming: request_timeout_s becomes an idle (per-chunk) timeout
     request_timeout_s: float = 240.0
+    max_request_s: float = 900.0  # total cap per streamed request
     max_retries: int = 6
     retry_base_s: float = 1.5
     retry_cap_s: float = 45.0
@@ -111,6 +114,9 @@ class Config:
         if self.temperature is not None:
             return self.temperature
         return float(self.params_for(model).get("temperature", 0.3))
+
+    def max_output_for(self, model: str) -> int:
+        return int(self.params_for(model).get("max_output_tokens", self.max_output_tokens))
 
     def window_for(self, model: str) -> int:
         if self.context_window:

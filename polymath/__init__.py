@@ -4,7 +4,7 @@ Brain (model loop) and hands (tools) are decoupled around an append-only,
 event-sourced session log. See docs/02-system-architecture.md.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.2.0"
 
 from .config import Config, load_config  # noqa: E402
 from .types import Budget, RunResult, TaskSpec  # noqa: E402
