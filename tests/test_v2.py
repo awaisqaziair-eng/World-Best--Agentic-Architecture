@@ -280,6 +280,32 @@ class V2AgentEndToEndTest(unittest.TestCase):
 
 
 @unittest.skipIf(Agent is None, "v2 extras not installed")
+class CompositionTest(unittest.TestCase):
+    def test_all_swaps_off_is_exactly_coder(self):
+        """Ablation validity: with every flag off, v2 IS the prebuilt Coder, part for part and in order."""
+        from pydantic_ai_harness.coder import Coder
+
+        from polymath.v2.agent import build_capabilities
+
+        ws = tempfile.mkdtemp()
+        caps, _ = build_capabilities(ws, opts=V2Options(terminal=False, recall=False, ledger=False))
+        self.assertEqual([type(c) for c in caps], [type(c) for c in Coder(workspace=ws).capabilities])
+
+    def test_each_swap_replaces_exactly_its_part(self):
+        from polymath.v2.agent import build_capabilities
+
+        ws = tempfile.mkdtemp()
+        names = lambda o: [type(c).__name__ for c in build_capabilities(ws, opts=o)[0]]
+        self.assertNotIn("Shell", names(V2Options(recall=False, ledger=False)))
+        self.assertIn("PolymathTerminal", names(V2Options(recall=False, ledger=False)))
+        self.assertIn("ClearToolResults", names(V2Options(recall=False, ledger=False)))
+        full = names(V2Options())
+        self.assertNotIn("ClearToolResults", full)
+        self.assertIn("RecallableEviction", full)
+        self.assertEqual(full[-1], "StateLedger")
+
+
+@unittest.skipIf(Agent is None, "v2 extras not installed")
 class CliTest(unittest.TestCase):
     def test_cli_runs_a_task_and_reports_telemetry(self):
         import contextlib

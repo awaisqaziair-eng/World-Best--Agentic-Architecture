@@ -1,6 +1,6 @@
 # 18 — Polymath v2: a prebuilt harness, enhanced where measurement says it falls short
 
-> Status: **Implemented; experiments running** · Code: `polymath/v2/`, `polymath/egress/` · Decisions: [ADR-011](adr/README.md) (foundation, pending R5), [ADR-012](adr/ADR-012-egress-governor.md), [ADR-013](adr/ADR-013-keep-polymath-terminal.md), [ADR-014](adr/ADR-014-recallable-eviction-and-ledger.md) · Research: [docs/research](research/README.md) · Tests: `tests/test_v2.py`, `tests/test_egress.py`
+> Status: **Implemented; experiments running** · Code: `polymath/v2/`, `polymath/egress/` · Decisions: [ADR-011](adr/ADR-011-v2-foundation.md) (foundation), [ADR-012](adr/ADR-012-egress-governor.md), [ADR-013](adr/ADR-013-keep-polymath-terminal.md), [ADR-014](adr/ADR-014-recallable-eviction-and-ledger.md) · Research: [docs/research](research/README.md) · Tests: `tests/test_v2.py`, `tests/test_egress.py`
 
 ## 1. The idea in one paragraph
 
