@@ -67,7 +67,7 @@ Five decisions define it ([02 — System architecture](docs/02-system-architectu
 ## Quickstart
 
 ```bash
-python3 --version                       # 3.11+; no dependencies (standard library only)
+python3 --version                       # 3.11+; v1 needs no dependencies (standard library only)
 export NVIDIA_NIM_API_KEY=nvapi-…        # or any OpenAI-compatible endpoint via POLYMATH_BASE_URL
 python3 -m polymath run "Summarise report.txt into summary.md in under 150 words" -w ./work
 python3 -m polymath chat -w ./work       # interactive

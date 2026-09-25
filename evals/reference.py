@@ -559,6 +559,44 @@ def _(ws, ctx):
     return "done"
 
 
+@sol("ret-token-audit")
+def _(ws, ctx):
+    from .tasks.retention import SERVICES, _p99
+
+    out = subprocess.run([sys.executable, "tools/issue_token.py"], cwd=ws, capture_output=True, text=True, check=True).stdout
+    token = re.search(r"audit-token \.+ (AT-\w+)", out).group(1)
+    write(ws, "report.json", json.dumps({"token": token, "p99_ms": {s: _p99(s) for s in SERVICES}}))
+    return "done"
+
+
+@sol("ret-rename-changes")
+def _(ws, ctx):
+    changed = []
+    for f in sorted((ws / "pkg").glob("*.py")):
+        text = f.read_text()
+        if "legacy_total" in text:
+            f.write_text(text.replace("legacy_total", "compute_total"))
+            changed.append(f.relative_to(ws).as_posix())
+    write(ws, "CHANGES.md", "\n".join(changed) + "\npython -m unittest discover -s tests: OK\n")
+    return "done"
+
+
+def untouched(t) -> tuple[bool, str]:
+    """No false positives: the verifier must REJECT a workspace in which nothing was done."""
+    ws = Path(tempfile.mkdtemp()) / "ws"
+    ws.mkdir()
+    ctx = t.setup(ws) or {}
+    try:
+        ok, detail = t.verify(ws, RunResult("ref", "main", "completed", "finished", ""), ctx)
+    except Exception as e:  # a crashing verifier is not a rejection we can trust
+        ok, detail = True, f"verifier crashed on untouched workspace: {type(e).__name__}: {e}"
+    finally:
+        if t.teardown:
+            t.teardown(ctx)
+        shutil.rmtree(ws.parent, ignore_errors=True)
+    return (not ok), detail
+
+
 def main() -> int:
     missing = [t.id for t in ALL if t.id not in SOL]
     if missing:
@@ -581,8 +619,15 @@ def main() -> int:
             shutil.rmtree(ws.parent, ignore_errors=True)
         failures += not ok
         print(f"{'OK  ' if ok else 'FAIL'} {t.id:<24} {detail[:150]}")
-    print(f"\n{len(SOL) - failures}/{len(SOL)} reference solutions accepted; {len(missing)} tasks lack one")
-    return 1 if failures or missing else 0
+    print(f"\n{len(SOL) - failures}/{len(SOL)} reference solutions accepted; {len(missing)} tasks lack one\n")
+    false_pos = 0
+    for t in ALL:
+        rejected, detail = untouched(t)
+        false_pos += not rejected
+        if not rejected:
+            print(f"FAIL {t.id:<24} ACCEPTED an untouched workspace: {detail[:120]}")
+    print(f"{len(ALL) - false_pos}/{len(ALL)} untouched workspaces rejected")
+    return 1 if failures or missing or false_pos else 0
 
 
 if __name__ == "__main__":

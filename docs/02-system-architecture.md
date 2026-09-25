@@ -235,7 +235,7 @@ Process model inside one run: one kernel thread per agent; tool batches may fan 
 
 | Concern | Choice | Why (see ADRs) |
 |---|---|---|
-| Language/runtime | Python ≥ 3.11, **standard library only** | Zero supply-chain surface, runs anywhere Python runs ([ADR-006](adr/ADR-006-stdlib-only-core.md)). |
+| Language/runtime | Python ≥ 3.11, **standard library only** (the v1 core; v2 builds on the Pydantic AI harness as optional extras, see [18](18-v2-architecture.md)) | Zero supply-chain surface, runs anywhere Python runs ([ADR-006](adr/ADR-006-stdlib-only-core.md)). |
 | Storage | JSONL files | Append-only, human-readable, crash-tolerant, trivially shippable. |
 | Model API | OpenAI-compatible chat completions, **streamed (SSE)** | Every serving stack speaks it (NIM, vLLM, SGLang, TGI, OpenAI); streaming turns timeouts into idle timeouts ([ADR-010](adr/ADR-010-streaming-idle-timeouts.md)). |
 | Tool protocol | Native function calling, text fallback | Works with any instruction-following model ([ADR-005](adr/ADR-005-dual-tool-protocols.md)). |

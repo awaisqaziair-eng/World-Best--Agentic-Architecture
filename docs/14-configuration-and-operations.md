@@ -6,7 +6,7 @@
 
 ```bash
 git clone <this repo> && cd World-Best--Agentic-Architecture
-python3 --version            # ≥ 3.11, nothing else required (standard library only)
+python3 --version            # ≥ 3.11; the v1 core needs nothing else (standard library only). v2: pip install -e '.[v2,egress]'
 pip install -e .             # optional: installs the `polymath` command
 export NVIDIA_NIM_API_KEY=nvapi-...   # never commit keys; the repo .gitignore excludes *.env
 ```
@@ -131,6 +131,6 @@ print(res.state, res.stop_reason, res.answer, res.usage.total)
 
 ```bash
 python3 -m unittest discover -s tests -t .          # 122 offline tests, ~12 s, no network
-python3 -m evals.reference                           # verifier self-test (34 tasks, both directions)
+python3 -m evals.reference                           # verifier self-test (36 tasks, both directions)
 python3 -m evals.runner --tasks core --out /tmp/run  # live evaluation (needs an API key)
 ```

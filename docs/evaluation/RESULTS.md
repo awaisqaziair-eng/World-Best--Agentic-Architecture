@@ -11,7 +11,7 @@
 | Endpoint | NVIDIA NIM hosted API (shared, OpenAI-compatible) |
 | Models | `z-ai/glm-5.3` (primary), `nvidia/nemotron-3-super-120b-a12b`; utility `nvidia/nemotron-3.5-lightning-30b-a3b` |
 | Suites | **core** — 28 tasks, 11 categories · **hard** — 6 tasks ([13 §2.2](../13-evaluation-and-testing.md#22-task-inventory)) |
-| Verifiers | hidden, deterministic; validated both ways (`python -m evals.reference`: 34/34 references accepted, 34/34 untouched workspaces rejected, `eval`-cheat rejected) |
+| Verifiers | hidden, deterministic; validated both ways by `python -m evals.reference`: every reference solution accepted and every untouched workspace rejected (34/34 each for the v1 runs; 36/36 each since the retention tasks). The untouched-workspace direction was a one-off check until it was found missing from the code during the v2 audit; it is now part of the command, `eval`-cheat rejected) |
 | Isolation | fresh workspace per task outside the repo; model fail-over **disabled** in comparative runs (`--no-fallback`) so each result belongs to one model |
 | Harness modes | **full** (14 tools, skills, hints, memory, nudges, verification, loop detection) · **minimal** (bash, read/write/edit, finish; no skills/hints/memory/nudges/verification) |
 | Harness versions | **v1.0** initial · **v1.1** overhead reductions (ADR-009) · **v1.2** streaming gateway (ADR-010) + resumable failures + wrap-up hardening |

@@ -11,7 +11,7 @@ Two questions, two instruments:
 
 ```mermaid
 flowchart TB
-    L4["Live evals — 34 tasks, hidden verifiers\n(core 28 + hard 6), multiple models, ablations"]
+    L4["Live evals — 36 tasks, hidden verifiers\n(core 28 + hard 6 + retention 2), multiple models, stacks, ablations"]
     L3["Durability & chaos — kill -9 + resume · 6 fault kinds · 5 random fault seeds"]
     L2["Kernel behaviour — scripted models: termination, verification, budgets,\nloops, delegation, replay, tracing, spec conformance"]
     L1["Units — JSON repair · schema coercion · event log · protocols · retry/backoff ·\nbreakers · terminal (10 adversarial scenarios) · files/search · context engine · memory · router"]
@@ -39,7 +39,7 @@ Run: `python3 -m unittest discover -s tests -t .` — 122 tests, ~12 s. The suit
 ### 2.1 Principles
 - **Hidden, deterministic verifiers.** The agent never sees the checker. Checks are exact where the task is exact (numbers, orderings, file sets) and structural where it is not (headings, word counts, required facts).
 - **Traps that punish shallow work.** Dirty rows and inconsistent casing; decoy numbers (5xx-looking sizes and paths in logs); superseded documents; planned-but-unreleased versions; tie-breaking rules; a performance threshold; an `eval`-ban for the parser; retry-vs-404 semantics against a live flaky server.
-- **Verifiers are tested code.** Every verifier must (a) reject an untouched workspace and (b) accept an independent reference solution — `python -m evals.reference` checks both for all 34 tasks. This caught two verifier bugs (a wrong reference schedule; a regex that banned `re.compile`), which would otherwise have silently mis-scored agents.
+- **Verifiers are tested code.** Every verifier must (a) reject an untouched workspace and (b) accept an independent reference solution — `python -m evals.reference` checks both for all 36 tasks (the untouched-workspace direction became code only in the v2 audit; before that it was a one-off check). This caught two verifier bugs (a wrong reference schedule; a regex that banned `re.compile`), which would otherwise have silently mis-scored agents.
 - **Isolation.** Fresh workspace per task outside the repository; sessions and memory per run directory; model fail-over disabled in comparative runs so each result is attributable to one model.
 
 ### 2.2 Task inventory
