@@ -37,6 +37,8 @@ Two exceptions to rule 1, both applied to make the comparison *about the harness
 |---|---|---|---|
 | start | First launch without the governor (3 stacks) | 429 storms; deepagents "completed" runs that had actually failed (D3) | Aborted; results discarded; governor built (R4); LangChain `on_failure="error"` |
 | +3 h | Plain AIMD drove the governor to 4 req/min against provider-side throttling (R4 §4) | Throughput collapsed ~8×; no failures (0 give-ups) | Governor replaced by the loss-tolerant version at 02:16:18 (container time). Clients retried the ~1 s outage; trials overlapping the swap are audited in §5 |
+| 02:20–03:10 | NIM degradation on `nemotron-3-super`: 50–70 % of attempts throttled even at 0.1 req/s; 31 governor give-ups | v1's 900 s wall budget counted queue time, so two v1 trials failed on time alone (defect 19); prebuilt stacks have no wall budget and simply waited | **Runners paused (SIGSTOP) at 03:10:31**; direct probes every 10 min (6/10, 5/10, 7/10, 3/10 with none of our traffic) |
+| 03:45 | The same probe showed other models healthy: `nemotron-3-ultra` 6/6, `kimi-k3` 6/6, `gpt-oss-20b` 6/6; `glm-5.3` 0/6 | Capacity is per model (R4 §4.1) | Model-independent experiments moved to **nemotron-3-ultra** on a separate governor (port 8788): the paired `pydanticai-coder` vs `polymath-v2` core comparison and the retention arms. The four-stack table stays on `nemotron-3-super` and resumes when it recovers |
 
 ## 5. Results
 
