@@ -21,6 +21,22 @@ $ polymath run "Write primes.py that prints how many primes are below 1,000,000 
 
 ---
 
+## Two generations, one evidence base
+
+| | **v1** (`polymath/`, stdlib only) | **v2** (`polymath/v2/`, on the Pydantic AI harness) |
+|---|---|---|
+| Idea | Every layer built from scratch: loop, gateway, context engine, terminal, event log | A **prebuilt harness as shipped**, with Polymath components swapped in **only where measurement shows the prebuilt part falls short** |
+| Agent loop, file tools, repo context, arg repair | Polymath | Pydantic AI `Coder`, **unmodified** |
+| Terminal | Polymath `PersistentShell` | the same terminal, as a native toolset (14/14 adversarial scenarios vs best prebuilt 10/14, [R3](docs/research/03-terminal-bakeoff.md)) |
+| Old tool results | batched clearing + compaction | **addressable eviction**: stubs with handles, exact recall, fault-driven pinning, reacquisition metrics ([R2](docs/research/02-context-management-literature.md), [ADR-014](docs/adr/ADR-014-recallable-eviction-and-ledger.md)) |
+| State after compaction | model-written summary | + a **machine-derived state ledger** (files, commands, exit codes, tests) |
+| Rate limits | per-client retries | **egress governor** below every SDK: loss-tolerant AIMD, retry before commit ([R4](docs/research/04-egress-governor.md)) |
+| Run | `polymath run "…"` | `python -m polymath.v2 "…" --workspace DIR` |
+
+v2 is the answer to "don't build your own SDK; use prebuilt ones and enhance them". It was chosen by **auditing four prebuilt SDKs in source** (10 reproducible defects, [R1](docs/research/01-sdk-landscape.md)) and **benchmarking them on the same tasks, model and hidden verifiers** (R5, running). Every swap has an off switch, so each claimed gain is an ablation, not an anecdote. Start at [docs/18-v2-architecture.md](docs/18-v2-architecture.md) and [docs/research](docs/research/README.md).
+
+---
+
 ## Architecture at a glance
 
 ```mermaid
@@ -97,19 +113,25 @@ python3 -m evals.runner --tasks core --out /tmp/run   # live evaluation (needs a
 | 15 | [Performance & cost](docs/15-performance-and-cost.md) | Where time and tokens go, measured |
 | 16 | [Roadmap](docs/16-roadmap.md) | What's next (and what isn't done) |
 | 17 | [Prompt specification](docs/17-prompt-specification.md) | Every prompt the models see, verbatim (generated from code) |
+| 18 | [**v2 architecture**](docs/18-v2-architecture.md) | Prebuilt harness + measured swaps: layers, turn sequence, result lifecycle, config |
+| R | [**Research notes**](docs/research/README.md) | SDK audit (R1), context literature (R2), terminal bake-off (R3), egress governor (R4), stack bake-off (R5) |
 | — | [ADRs](docs/adr/README.md) · [Glossary](docs/glossary.md) · [Schemas](spec/schemas) · [**Results**](docs/evaluation/RESULTS.md) | |
 
 ## Repository layout
 
 ```text
-polymath/            the agent & harness (stdlib only)
+polymath/            v1: the agent & harness (stdlib only)
   kernel/            agent loop, runtime, router, verifier, prompts, workflows
   context/           projection, clearing/compaction engine, token calibration
   gateway/           OpenAI-compatible streaming client, fail-over, protocols, record/replay
   tools/             terminal, files, search, planning, memory, skills, web, delegate
   memory/ observability/ skills/   BM25 store · tracer & console · 7 built-in playbooks
-tests/               121 deterministic tests (no network)
-evals/               34 live tasks with hidden verifiers, reference solutions, runner
+  v2/                v2: Coder composition + swaps (terminal, recall, ledger), CLI   [extra: v2]
+  egress/            egress governor: OpenAI-compatible rate-governing proxy       [extra: egress]
+tests/               155 deterministic tests (no network; v2/egress tests skip without the extras)
+evals/               36 live tasks with hidden verifiers (28 core, 6 hard, 2 retention), runner,
+                     and backends for deepagents, Pydantic AI Coder, OpenAI Agents SDK, v2 + ablations
+research/            terminal bake-off harness, SDK probes, raw results
 spec/schemas/        JSON Schemas for every contract (validated against real runs)
-docs/                architecture, specifications, ADRs, results
+docs/                architecture, specifications, ADRs, research notes, results
 ```
