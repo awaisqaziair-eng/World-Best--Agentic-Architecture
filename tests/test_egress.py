@@ -75,14 +75,14 @@ class GovernorProxyTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.gov.stats.retries, 0)
 
     async def test_retries_429_and_decreases_rate_when_load_induced(self):
-        self.gov.limiter.cfg.min_samples = 1
+        self.gov.cfg.min_samples = 1
         self.script = [("json", 429, {"status": 429}, {"Retry-After": "0"}), ("json", 200, GOOD)]
-        rate0 = self.gov.limiter.rate
+        rate0 = self.gov.limiter_for('m').rate
         r = await self.post()
         self.assertEqual(r.status, 200)
         self.assertEqual(len(self.seen), 2)
         self.assertEqual(self.gov.stats.throttles, 1)
-        self.assertLess(self.gov.limiter.rate, rate0 + self.cfg.alpha)  # decreased, then +alpha on success
+        self.assertLess(self.gov.limiter_for('m').rate, rate0 + self.cfg.alpha)  # decreased, then +alpha on success
 
     async def test_retries_overload_reported_inside_200_stream(self):
         self.script = [("sse", sse(OVERLOAD)), ("sse", sse(CHUNK, CHUNK2, "[DONE]"))]
@@ -140,6 +140,33 @@ class GovernorProxyTest(unittest.IsolatedAsyncioTestCase):
         finally:
             del os.environ["POLYMATH_TEST_KEY"]
         self.assertEqual(self.seen[0]["auth"], "Bearer envkey")
+
+    async def test_request_abandoned_by_client_is_dropped_before_upstream(self):
+        self.gov.limiter_for("m").rate = 0.5  # the second request waits ~2 s for its admission slot
+        first = await self.post()
+        self.assertEqual(first.status, 200)
+        task = asyncio.ensure_future(self.client.post("/v1/chat/completions", json={"model": "m"}, headers={"Authorization": "Bearer k"}))
+        await asyncio.sleep(0.3)
+        task.cancel()  # the client gives up while its request is queued
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+        await asyncio.sleep(2.5)
+        # The property that matters: an abandoned request never spends an upstream attempt. Depending on
+        # the server configuration, aiohttp either cancels the handler itself or the governor's own check
+        # (stats.abandoned) drops it before the attempt.
+        self.assertEqual(len(self.seen), 1)
+        self.assertEqual(self.gov.stats.requests, 2)
+        self.assertEqual(self.gov.stats.attempts, 1)
+
+    async def test_throttling_on_one_model_does_not_slow_another(self):
+        self.gov.cfg.min_samples = 1
+        self.script = [("json", 429, {"status": 429}), ("json", 200, GOOD), ("json", 200, GOOD)]
+        await self.post()  # model "m": throttled once, then succeeds
+        await self.client.post("/v1/chat/completions", json={"model": "other"}, headers={"Authorization": "Bearer k"})
+        self.assertLess(self.gov.limiter_for("m").rate, self.cfg.rate + self.cfg.alpha)
+        self.assertEqual(self.gov.limiter_for("other").rate, self.cfg.rate)  # never cut by m's throttling (already at max)
+        s = await (await self.client.get("/__governor/stats")).json()
+        self.assertEqual(set(s["models"]), {"m", "other"})
 
     async def test_stats_endpoint(self):
         await self.post()

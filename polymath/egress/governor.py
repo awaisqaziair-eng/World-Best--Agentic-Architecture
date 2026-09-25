@@ -25,6 +25,10 @@ behaviour. That is what makes cross-stack comparisons fair.
    style congestion control likewise refuses to read as congestion. Below the threshold a
    throttle only delays its own request (backoff, honouring ``Retry-After``). Above it,
    ``Retry-After`` also pauses admission for everyone, because the limit is then ours.
+   **Per model.** Each model gets its own limiter; only the in-flight cap is shared. Measured on
+   NIM, throttling is a property of a model's deployment: one model answered 7 of 12 probes with
+   429/503 while another on the same account answered 0 of 12. A single shared rate would let one
+   saturated model starve the healthy ones.
 3. **Retry before commit.** 429, 5xx, connection errors and an error as the first stream event
    are retried while nothing has been sent to the client. Once the first byte is forwarded the
    response is committed, and later errors pass through untouched. Nothing is ever duplicated.
@@ -95,6 +99,7 @@ class Stats:
     connection_errors: int = 0
     rate_decreases: int = 0
     committed_stream_errors: int = 0
+    abandoned: int = 0  # client disconnected while queued: dropped instead of spending an upstream attempt
     queue_wait_s: float = 0.0
     max_queue_wait_s: float = 0.0
     status_counts: dict[str, int] = field(default_factory=dict)
@@ -111,7 +116,6 @@ class AimdLimiter:
         self._paused_until = 0.0
         self._last_decrease = float("-inf")
         self._lock = asyncio.Lock()
-        self.inflight = asyncio.Semaphore(cfg.max_inflight)
         self.decreases = 0
         self._outcomes: deque[bool] = deque(maxlen=cfg.throttle_window)  # True = throttled
 
@@ -190,10 +194,17 @@ def in_body_error(payload: bytes) -> str | None:
 class Governor:
     def __init__(self, cfg: GovernorConfig) -> None:
         self.cfg = cfg
-        self.limiter = AimdLimiter(cfg)
+        self._limiters: dict[str, AimdLimiter] = {}
+        self.inflight = asyncio.Semaphore(cfg.max_inflight)  # shared: the only account-wide constraint we assume
         self.stats = Stats()
         self._session: ClientSession | None = None
         self._log = open(cfg.log_path, "a", encoding="utf-8") if cfg.log_path else None  # noqa: SIM115
+
+    def limiter_for(self, model: str | None) -> AimdLimiter:
+        key = model or "*"
+        if key not in self._limiters:
+            self._limiters[key] = AimdLimiter(self.cfg)
+        return self._limiters[key]
 
     # ── lifecycle ───────────────────────────────────────────────────────
     def app(self) -> web.Application:
@@ -214,8 +225,11 @@ class Governor:
             self._log.close()
 
     async def _stats(self, _request: web.Request) -> web.Response:
-        body = asdict(self.stats) | {"rate_rps": round(self.limiter.rate, 4), "inflight_cap": self.cfg.max_inflight,
-                                     "throttle_fraction": round(self.limiter.throttle_fraction, 3), "load_induced": self.limiter.load_induced}
+        models = {m: {"rate_rps": round(l.rate, 4), "throttle_fraction": round(l.throttle_fraction, 3), "load_induced": l.load_induced}
+                  for m, l in self._limiters.items()}
+        body = asdict(self.stats) | {"inflight_cap": self.cfg.max_inflight, "models": models,
+                                     # the most constrained model, for one-line monitoring
+                                     "rate_rps": min((m["rate_rps"] for m in models.values()), default=self.cfg.rate)}
         return web.json_response(body)
 
     # ── proxy ───────────────────────────────────────────────────────────
@@ -249,16 +263,23 @@ class Governor:
         url, headers, t0 = self._upstream_url(request), self._headers(request), time.monotonic()
         rec: dict[str, Any] = {"ts": time.time(), "path": request.rel_url.path, "model": _model_of(body), "statuses": []}
         last: tuple[int, bytes, dict[str, str]] = (502, b'{"error":{"message":"governor: upstream unreachable"}}', {})
+        lim = self.limiter_for(rec["model"])
         attempt = 0
         while True:
             attempt += 1
-            waited = await self.limiter.admit()
+            waited = await lim.admit()
             st.queue_wait_s += waited
             st.max_queue_wait_s = max(st.max_queue_wait_s, waited)
             rec["queue_wait_s"] = round(rec.get("queue_wait_s", 0.0) + waited, 3)
+            if _client_gone(request):
+                # The client timed out while queued (and will have retried with a new request). aiohttp keeps
+                # the orphaned handler running, so without this check the attempt would still use upstream
+                # capacity that nobody reads, which in an outage is the scarcest thing there is.
+                st.abandoned += 1
+                return self._finish(rec, t0, attempt, "abandoned", web.Response(status=499))
             st.attempts += 1
             retry_after: float | None = None
-            async with self.limiter.inflight:
+            async with self.inflight:
                 outcome: Any = None
                 try:
                     assert self._session is not None
@@ -279,7 +300,7 @@ class Governor:
                     last = (502, json.dumps({"error": {"message": f"governor: {type(e).__name__}: {e}"}}).encode(), {})
                 if outcome is not None:
                     if isinstance(outcome, web.StreamResponse):
-                        self.limiter.on_success()
+                        lim.on_success()
                         st.completed += 1
                         return self._finish(rec, t0, attempt, "ok", outcome)
                     status, payload, keep_headers, retryable, throttled = outcome
@@ -290,9 +311,9 @@ class Governor:
                     if throttled:
                         st.throttles += 1
                         retry_after = parse_retry_after(resp.headers.get("Retry-After"))
-                        before = self.limiter.decreases
-                        self.limiter.on_throttle(retry_after)
-                        st.rate_decreases += self.limiter.decreases - before
+                        before = lim.decreases
+                        lim.on_throttle(retry_after)
+                        st.rate_decreases += lim.decreases - before
             delay = self._backoff(attempt, retry_after)
             if attempt >= self.cfg.max_attempts or time.monotonic() - t0 + delay > self.cfg.deadline_s:
                 st.gave_up += 1
@@ -346,8 +367,9 @@ class Governor:
         return out
 
     def _finish(self, rec: dict[str, Any], t0: float, attempts: int, outcome: str, resp: web.StreamResponse) -> web.StreamResponse:
-        rec.update(attempts=attempts, outcome=outcome, duration_s=round(time.monotonic() - t0, 3), rate_rps=round(self.limiter.rate, 4),
-                   throttle_fraction=round(self.limiter.throttle_fraction, 3))
+        lim = self.limiter_for(rec.get("model"))
+        rec.update(attempts=attempts, outcome=outcome, duration_s=round(time.monotonic() - t0, 3), rate_rps=round(lim.rate, 4),
+                   throttle_fraction=round(lim.throttle_fraction, 3))
         if self._log:
             self._log.write(json.dumps(rec) + "\n")
             self._log.flush()
@@ -368,6 +390,11 @@ async def _peek_first_event(resp: Any) -> tuple[bytes, str | None]:
                 break
             return head, in_body_error(payload)
     return head, None
+
+
+def _client_gone(request: web.Request) -> bool:
+    transport = request.transport
+    return transport is None or transport.is_closing()
 
 
 def _response(status: int, payload: bytes, headers: dict[str, str]) -> web.Response:

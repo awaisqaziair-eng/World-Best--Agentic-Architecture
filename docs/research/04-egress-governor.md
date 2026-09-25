@@ -98,9 +98,25 @@ This is a known pitfall in network congestion control: loss that isn't caused by
 
 Tests pin both regimes (`test_background_throttling_does_not_cut_the_rate`, `test_burst_of_throttles_is_one_congestion_signal`). The governor was swapped for the corrected version during the bake-off, at 02:16:18 container time; §3's numbers are from the first version. Trials that overlapped the swap are audited in R5.
 
+### 4.1 Throttling is per model, so the limiter is too
+
+A direct probe during the degraded period (bypassing the governor, one small request every 3 s, same account):
+
+| Model | Outcomes of 12 requests |
+|---|---|
+| `nvidia/nemotron-3-super-120b-a12b` | 5 × 200, **7 × 429/503** |
+| `nvidia/nemotron-3.5-lightning-30b-a3b` | 10 × 200, **0 throttled** (2 slow timeouts) |
+
+Capacity is a property of a model's deployment, not of the account. The governor now keeps **one limiter per model**: its own rate, throttle window and pause. Only the in-flight cap is shared. A saturated model can no longer starve a healthy one, which matters because a harness talks to several models (for example a utility model for routing and summaries). Stats report per-model state (`"models": {…}`). Test: `test_throttling_on_one_model_does_not_slow_another`.
+
+### 4.2 Requests abandoned while queued are dropped
+
+Clients time out while waiting (240 s read timeouts) and retry with a *new* request. `web.run_app` defaults to `handler_cancellation=False`, so the orphaned handler would still spend an upstream attempt that nobody reads, and in an outage upstream capacity is the scarcest resource there is. The governor now checks the client connection before every attempt and drops abandoned requests (`stats.abandoned`).
+
 ## 5. Limits and honest caveats
 
 - **It trades latency for completion.** Queueing replaces failing. Under a hard account limit that is the right trade for batch and agent work, but a latency-critical interactive product would want priority classes. They aren't implemented.
 - **Throughput is capped by the account.** The governor finds the limit; it can't raise it. The R5 bake-off takes hours because about 0.4–0.7 req/s is what this account sustains.
+- **Provider outages can't be engineered away.** During the degraded period, NIM throttled a majority of attempts on one model even at 0.1 req/s. The governor turns that into queueing and a few visible give-ups, and trials killed by it are audited and re-run (R5).
 - **Single process.** The state lives in one proxy. Several machines sharing one account would need the bucket in a shared store (e.g. Redis) or a single egress point.
 - **Semantics of in-body errors.** Any OpenAI-style error object in a 200 before commit is treated as retryable. A deterministic in-body error would be retried `max_attempts` times before it surfaces. We have only observed transient ones (overload) on NIM.
