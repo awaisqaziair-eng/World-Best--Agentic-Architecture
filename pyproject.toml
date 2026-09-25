@@ -14,6 +14,13 @@ dependencies = []  # the v1 core stays standard-library only (ADR-006); v2 layer
 [project.optional-dependencies]
 # Account-wide rate governor in front of any OpenAI-compatible endpoint (docs/research/04-egress-governor.md).
 egress = ["aiohttp>=3.14"]
+# Polymath v2 = the Pydantic AI harness + Polymath's measured enhancements (polymath/v2).
+v2 = [
+    "pydantic-ai-slim[openai]==2.49.0",
+    "pydantic-ai-harness==0.34.0",
+    "httpx2>=2.13",
+    "tenacity>=9.1",
+]
 # Prebuilt stacks compared in the v2 bake-offs (docs/research/01, 03). Pinned to the versions measured.
 research = [
     "aiohttp>=3.14",

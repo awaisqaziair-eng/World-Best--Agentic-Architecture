@@ -362,21 +362,23 @@ full text saved to a file). Inspect big files with grep/head/wc instead of print
             sh.restart()
         timeout = min(float(args.get("timeout") or ctx.config.shell_timeout_s), ctx.config.shell_max_timeout_s)
         res = sh.run(args["command"], timeout=timeout)
-        out = res.output if res.output.strip() else "(no output)"
-        footer = []
-        if res.timed_out:
-            footer.append(
-                f"[TIMEOUT: command exceeded {timeout:.0f}s and was interrupted. Partial output above. "
-                "Run long jobs in the background (`nohup CMD > log 2>&1 &`) or pass a larger `timeout`.]"
-            )
-        if res.shell_died:
-            footer.append(f"[The shell exited (code {res.exit_code}). A fresh shell was started in {res.cwd}; exported variables/functions were lost.]")
-        elif res.restarted and res.timed_out:
-            footer.append(f"[The shell was unresponsive and was restarted in {res.cwd}; shell state was lost.]")
-        footer.append(f"[exit code: {res.exit_code if res.exit_code is not None else 'n/a'} | {res.duration_s:.2f}s | cwd: {res.cwd}]")
-        return ToolOutput(
-            out.rstrip("\n") + "\n" + "\n".join(footer),
-            # A non-zero exit (failing tests, grep with no match) is a *result*, not a tool fault.
-            is_error=bool(res.timed_out or res.shell_died),
-            meta={"exit_code": res.exit_code, "timed_out": res.timed_out, "cwd": res.cwd, "restarted": res.restarted},
+        text, is_error = render_shell_result(res, timeout)
+        return ToolOutput(text, is_error=is_error, meta={"exit_code": res.exit_code, "timed_out": res.timed_out, "cwd": res.cwd, "restarted": res.restarted})
+
+
+def render_shell_result(res: ShellResult, timeout: float) -> tuple[str, bool]:
+    """Model-facing text for a shell result, shared by the v1 tool and the v2 SDK toolset."""
+    out = res.output if res.output.strip() else "(no output)"
+    footer = []
+    if res.timed_out:
+        footer.append(
+            f"[TIMEOUT: command exceeded {timeout:.0f}s and was interrupted. Partial output above. "
+            "Run long jobs in the background (`nohup CMD > log 2>&1 &`) or pass a larger `timeout`.]"
         )
+    if res.shell_died:
+        footer.append(f"[The shell exited (code {res.exit_code}). A fresh shell was started in {res.cwd}; exported variables/functions were lost.]")
+    elif res.restarted and res.timed_out:
+        footer.append(f"[The shell was unresponsive and was restarted in {res.cwd}; shell state was lost.]")
+    footer.append(f"[exit code: {res.exit_code if res.exit_code is not None else 'n/a'} | {res.duration_s:.2f}s | cwd: {res.cwd}]")
+    # A non-zero exit (failing tests, grep with no match) is a *result*, not a tool fault.
+    return out.rstrip("\n") + "\n" + "\n".join(footer), bool(res.timed_out or res.shell_died)

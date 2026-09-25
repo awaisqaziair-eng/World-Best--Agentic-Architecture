@@ -58,6 +58,8 @@ def run_one(rt: Runtime, task: EvalTask, out: Path, rep: int, mode: str) -> dict
                 answer=(res.answer or "")[:600],
                 error=res.error,
             )
+            if res.extra:
+                rec["extra"] = {k: v for k, v in res.extra.items() if k != "trace"}
         else:
             res = rt.run(
                 instruction,

@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from ..framework import EvalTask
-from . import coding, data, debugging, hard, knowledge, ops, reasoning
+from . import coding, data, debugging, hard, knowledge, ops, reasoning, retention
 
 CORE: list[EvalTask] = [*coding.TASKS, *debugging.TASKS, *ops.TASKS, *data.TASKS, *reasoning.TASKS, *knowledge.TASKS]
 HARD: list[EvalTask] = list(hard.TASKS)
-ALL: list[EvalTask] = CORE + HARD
+RETENTION: list[EvalTask] = list(retention.TASKS)  # run under a small window; see retention.py
+ALL: list[EvalTask] = CORE + HARD + RETENTION
 BY_ID = {t.id: t for t in ALL}
 assert len(BY_ID) == len(ALL), "duplicate task ids"
 
@@ -18,6 +19,8 @@ def select(spec: str | None) -> list[EvalTask]:
         return list(CORE)
     if spec == "hard":
         return list(HARD)
+    if spec == "retention":
+        return list(RETENTION)
     if spec == "all":
         return list(ALL)
     out: list[EvalTask] = []

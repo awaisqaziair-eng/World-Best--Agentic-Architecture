@@ -223,8 +223,41 @@ def run_openai_agents(instruction: str, ws: Path, *, model: str, max_turns: int,
         return BackendResult("failed", type(e).__name__, None, 0, 0, 0, time.monotonic() - t0, f"{type(e).__name__}: {str(e)[:400]}", {"trace": traceback.format_exc()[-800:]})
 
 
+# ── Polymath v2: Coder composition + measured replacements (polymath/v2/agent.py) ──
+def run_polymath_v2(instruction: str, ws: Path, *, model: str, max_turns: int, terminal: bool = True, recall: bool = True, ledger: bool = True, addressable: bool = True, **_: Any) -> BackendResult:
+    """Same model factory, temperature and request limit as ``pydanticai-coder``: the only
+    differences are the component swaps selected by the flags."""
+    from pydantic_ai import UsageLimits
+
+    from polymath.v2.agent import V2Options, build_agent
+
+    window = int(os.environ["POLYMATH_V2_CONTEXT_WINDOW"]) if os.environ.get("POLYMATH_V2_CONTEXT_WINDOW") else None  # stress regime
+    opts = V2Options(terminal=terminal, recall=recall, ledger=ledger, addressable=addressable, context_window=window)
+    agent, tel = build_agent(model, ws, opts=opts, model_obj=_pydantic_model(model))
+    t0 = time.monotonic()
+    extra: dict[str, Any] = {}
+    try:
+        res = agent.run_sync(f"{instruction}\n\nWorking directory: {ws}", usage_limits=UsageLimits(request_limit=max_turns), model_settings={"temperature": TEMPERATURE})
+        u = res.usage
+        out = BackendResult("completed", "finished", str(res.output), u.requests, u.input_tokens or 0, u.output_tokens or 0, time.monotonic() - t0)
+    except Exception as e:
+        out = BackendResult("failed", type(e).__name__, None, 0, 0, 0, time.monotonic() - t0, f"{type(e).__name__}: {str(e)[:400]}", {"trace": traceback.format_exc()[-800:]})
+    if tel.recall_runs:
+        extra["recall"] = tel.recall_runs[-1].as_dict()
+    extra["ledger_injections"] = len(tel.ledger_renders)
+    out.extra.update(extra)
+    return out
+
+
 BACKENDS: dict[str, Callable[..., BackendResult]] = {
     "deepagents": run_deepagents,
     "pydanticai-coder": run_pydanticai_coder,
     "openai-agents": run_openai_agents,
+    "polymath-v2": run_polymath_v2,
+    # Ablations: exactly one family of swaps each, against the pydanticai-coder baseline.
+    "polymath-v2-terminal": lambda *a, **k: run_polymath_v2(*a, recall=False, ledger=False, **k),
+    "polymath-v2-context": lambda *a, **k: run_polymath_v2(*a, terminal=False, **k),
+    # Retention arms (terminal on in all, so only context handling differs; see evals/tasks/retention.py):
+    "polymath-v2-clear": lambda *a, **k: run_polymath_v2(*a, ledger=False, addressable=False, **k),  # H1 control
+    "polymath-v2-recall": lambda *a, **k: run_polymath_v2(*a, ledger=False, **k),  # H1 (+H3)
 }
