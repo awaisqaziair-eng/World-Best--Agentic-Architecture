@@ -42,6 +42,7 @@ class V2Options:
     recall: bool = True
     ledger: bool = True
     addressable: bool = True  # False: same eviction policy, irreversible placeholder (the H1 control arm)
+    stub_tail_lines: int = 1  # lines of each evicted result's tail shown in its stub
     # None → per-model default for Polymath's tiers, and Coder's clearing keeps its own resolution.
     # Set explicitly (a stress regime), it applies to Coder's ClearToolResults too, so every arm
     # works under the same pressure.
@@ -82,7 +83,8 @@ def build_capabilities(workspace: str | Path, *, model_name: str = "", opts: V2O
         if isinstance(part, Shell) and opts.terminal:
             caps.append(PolymathTerminal(root))
         elif isinstance(part, ClearToolResults) and opts.recall:
-            caps.append(RecallableEviction(context_window=window, store=store, history=tel.recall_runs, addressable=opts.addressable))
+            caps.append(RecallableEviction(context_window=window, store=store, history=tel.recall_runs, addressable=opts.addressable,
+                                           stub_tail_lines=opts.stub_tail_lines))
         elif isinstance(part, ClearToolResults) and opts.context_window:
             caps.append(ClearToolResults(max_fraction=0.7, context_window=opts.context_window))  # Coder's setting, same window
         elif isinstance(part, ToolOutputLimits) and opts.recall:

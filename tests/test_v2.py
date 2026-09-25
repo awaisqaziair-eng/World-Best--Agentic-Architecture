@@ -144,6 +144,14 @@ class RecallableEvictionTest(unittest.TestCase):
         out = self.compact(msgs)
         self.assertTrue(str(out[2].parts[0].content).startswith("[Tool output too large"))
 
+    def test_multi_line_tail_preview_shows_the_summary(self):
+        from polymath.v2.recall import _stub
+
+        report = "METRICS REPORT\n" + "row\n" * 160 + "SUMMARY\n  p99_ms = 304\n  (note)\nEND"
+        call_ = ToolCallPart("bash", {"command": "report auth"}, tool_call_id="c")
+        self.assertNotIn("p99_ms = 304", _stub("ev/x/1", call_, report))
+        self.assertIn("p99_ms = 304", _stub("ev/x/1", call_, report, tail_lines=3))
+
     def test_small_results_and_already_evicted_are_left_alone(self):
         msgs = _history(6, 100)  # ~25-token results: evicting them would not pay for the stub
         self.assertEqual(self.compact(msgs), msgs)

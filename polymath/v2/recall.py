@@ -126,6 +126,10 @@ class RecallableEviction(AbstractCapability[Any]):
     store: OverflowStore = field(default_factory=LocalFileStore)
     exclude_tools: frozenset[str] = frozenset({READ_TOOL})
     addressable: bool = True  # False = control arm: identical policy, irreversible placeholder (isolates H1)
+    # Non-empty lines from the END of the result shown in the stub. Summaries and errors live at the end
+    # (the terminal keeps tails for the same reason); a 1-line tail showed `END` and hid `p99_ms = 304`
+    # three lines above it, which made the model recall whole reports (retention transcripts, R6).
+    stub_tail_lines: int = 1
     history: list[RecallStats] = field(default_factory=list, repr=False)  # one entry per run, for evals
 
     # per-run state (fresh in for_run)
@@ -235,7 +239,7 @@ class RecallableEviction(AbstractCapability[Any]):
                 self._tag = tag
                 # Short handle, since every stub pays for it: per-run tag + counter.
                 handle = await self.store.write(f"ev/{tag}/{len(self._by_handle) + 1}", text.encode("utf-8"))
-                stub = _stub(handle, call, text)
+                stub = _stub(handle, call, text, tail_lines=self.stub_tail_lines)
                 self._by_handle[handle] = cid
             else:
                 handle, stub = "", CLEARED_PLACEHOLDER
@@ -262,14 +266,20 @@ class RecallableEviction(AbstractCapability[Any]):
         return out
 
 
-def _stub(handle: str, call: ToolCallPart, text: str) -> str:
-    """What the model keeps: enough to decide WHETHER to recall, and exactly how (~75 tokens)."""
+def _stub(handle: str, call: ToolCallPart, text: str, *, tail_lines: int = 1) -> str:
+    """What the model keeps: enough to decide WHETHER to recall, and exactly how (~70 tokens at tail_lines=1)."""
     args = json.dumps(call.args_as_dict(), default=str)
     if len(args) > 120:
         args = args[:117] + "..."
     lines = text.splitlines() or [""]
     first = lines[0][:80]
-    last = f" · last: {lines[-1][:80]!r}" if len(lines) > 1 else ""
+    last = ""
+    if len(lines) > 1:
+        if tail_lines <= 1:
+            last = f" · last: {lines[-1][:80]!r}"
+        else:
+            tail = [ln.strip() for ln in lines[1:] if ln.strip()][-tail_lines:]
+            last = f" · last {len(tail)} lines: {' ⏎ '.join(tail)[:240]!r}"
     return (
         f"{STUB_PREFIX}{handle!r}: {call.tool_name}({args}) · {len(lines)} lines, {len(text):,} chars · first: {first!r}{last}."
         f" Exact text: read_tool_result(handle={handle!r}); optional pattern, offset, limit, from_end.]"
