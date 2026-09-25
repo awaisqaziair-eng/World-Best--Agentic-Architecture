@@ -1,0 +1,1 @@
+{"stack": "deepagents", "model": "nvidia/nemotron-3-super-120b-a12b", "model_calls": 4, "final": "DONE", "passed": true, "answer_file": "832040", "seconds": 11.6}

@@ -78,6 +78,14 @@ class TestPersistentShell(TempDirTest):
     def test_unresponsive_shell_is_replaced(self):
         r = self.sh.run("while true; do :; done", timeout=0.5)
         self.assertTrue(r.timed_out and r.restarted)
+        # No child process exists to signal, so the escalation must not wait out its full 7 s of grace.
+        self.assertLess(r.duration_s, 3.0)
+        self.assertEqual(self.sh.run("echo ok").output.strip(), "ok")
+
+    def test_timeout_still_escalates_against_children(self):
+        # A child that ignores SIGINT must still be stopped (by SIGTERM) and the shell kept.
+        r = self.sh.run("trap '' INT; sleep 30", timeout=0.5)
+        self.assertTrue(r.timed_out)
         self.assertEqual(self.sh.run("echo ok").output.strip(), "ok")
 
 

@@ -281,8 +281,13 @@ class PersistentShell:
                         )
                     timed_out = True
                     sig, grace = escalation.pop(0)
-                    for p in descendants(self.proc.pid) - before:
+                    targets = descendants(self.proc.pid) - before
+                    for p in targets:
                         _signal(p, sig)
+                    if not targets:
+                        # Nothing to signal: the shell itself is busy (a builtin loop). Waiting out the
+                        # full grace cannot help; keep only a short window for a marker already in flight.
+                        grace = min(grace, 0.5)
                     deadline = time.monotonic() + grace
                     continue
                 ready, _, _ = select.select([fd], [], [], min(0.25, max(0.0, deadline - now)))

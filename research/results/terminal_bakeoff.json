@@ -1,0 +1,1310 @@
+[
+  {
+    "adapter": "polymath",
+    "scenario": "cd_persists",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "/tmp/tb_polymath_gy9fskwq/a/b\n",
+    "wall_s": 0.2
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "env_persists",
+    "passed": true,
+    "step_seconds": [
+      0.0,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "bar\n",
+    "wall_s": 0.3
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "function_persists",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "fn-x\n",
+    "wall_s": 0.2
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "heredoc",
+    "passed": true,
+    "step_seconds": [
+      0.03
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "45\n",
+    "wall_s": 0.3
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "unbalanced_quote",
+    "passed": true,
+    "step_seconds": [
+      0.0,
+      0.01
+    ],
+    "codes": [
+      2,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "alive\n",
+    "wall_s": 0.3
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "stdin_read",
+    "passed": true,
+    "step_seconds": [
+      0.0,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "next\n",
+    "wall_s": 0.3
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "exit_code",
+    "passed": true,
+    "step_seconds": [
+      0.0
+    ],
+    "codes": [
+      1
+    ],
+    "reaped": 0,
+    "last_output": "",
+    "wall_s": 0.2
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "timeout_returns",
+    "passed": true,
+    "step_seconds": [
+      2.0,
+      0.01
+    ],
+    "codes": [
+      130,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "after\n",
+    "wall_s": 2.2
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "timeout_grandchild_pipe",
+    "passed": true,
+    "step_seconds": [
+      2.01,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "after\n",
+    "wall_s": 2.2
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "background_survives_timeout",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      1.0,
+      0.01
+    ],
+    "codes": [
+      0,
+      130,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "bg-alive\n",
+    "wall_s": 1.1
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "exit_recovers",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      0.0
+    ],
+    "codes": [
+      7,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "alive\n",
+    "wall_s": 0.2
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "huge_output_bounded_tail_kept",
+    "passed": true,
+    "step_seconds": [
+      0.23
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "hij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghiEND\n",
+    "wall_s": 0.4
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "progress_bar_collapsed",
+    "passed": true,
+    "step_seconds": [
+      0.0
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "100%\ndone\n",
+    "wall_s": 0.2
+  },
+  {
+    "adapter": "polymath",
+    "scenario": "busy_loop_recovers",
+    "passed": true,
+    "step_seconds": [
+      3.51,
+      0.0
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "ok\n",
+    "wall_s": 3.7
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "cd_persists",
+    "passed": true,
+    "step_seconds": [
+      0.05,
+      0.06
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "/tmp/tb_langchain_zbfr2iz7/a/b\n",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "env_persists",
+    "passed": true,
+    "step_seconds": [
+      0.05,
+      0.05
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "bar\n",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "function_persists",
+    "passed": true,
+    "step_seconds": [
+      0.05,
+      0.05
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "fn-x\n",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "heredoc",
+    "passed": true,
+    "step_seconds": [
+      0.09
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "45\n",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "unbalanced_quote",
+    "passed": false,
+    "step_seconds": [
+      30.02,
+      0.05
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "alive\n",
+    "wall_s": 31.9
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "stdin_read",
+    "passed": false,
+    "step_seconds": [
+      20.01,
+      0.05
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "next\n",
+    "wall_s": 21.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "exit_code",
+    "passed": true,
+    "step_seconds": [
+      0.05
+    ],
+    "codes": [
+      1
+    ],
+    "reaped": 0,
+    "last_output": "",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "timeout_returns",
+    "passed": false,
+    "step_seconds": [
+      12.01,
+      0.05
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "after\n",
+    "wall_s": 13.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "timeout_grandchild_pipe",
+    "passed": false,
+    "step_seconds": [
+      12.02,
+      0.05
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "after\n",
+    "wall_s": 13.6
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "background_survives_timeout",
+    "passed": false,
+    "step_seconds": [
+      0.05,
+      11.01,
+      0.05
+    ],
+    "codes": [
+      0,
+      null,
+      1
+    ],
+    "reaped": 0,
+    "last_output": "[stderr] /bin/bash: line 1: kill: (13058) - No such process\n[stderr] /bin/bash: line 1: kill: (13058) - No such process\n",
+    "wall_s": 12.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "exit_recovers",
+    "passed": true,
+    "step_seconds": [
+      20.01,
+      0.06
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "alive\n",
+    "wall_s": 21.5
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "huge_output_bounded_tail_kept",
+    "passed": false,
+    "step_seconds": [
+      5.6
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "fghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\n",
+    "wall_s": 6.4
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "progress_bar_collapsed",
+    "passed": false,
+    "step_seconds": [
+      0.05
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "10%\n50%\n100%\ndone\n",
+    "wall_s": 0.9
+  },
+  {
+    "adapter": "langchain",
+    "scenario": "busy_loop_recovers",
+    "passed": true,
+    "step_seconds": [
+      12.0,
+      0.05
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "ok\n",
+    "wall_s": 13.0
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "cd_persists",
+    "passed": false,
+    "step_seconds": [
+      0.0,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "/tmp/tb_deepagents_cv6nx_w0\n",
+    "wall_s": 2.3
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "env_persists",
+    "passed": false,
+    "step_seconds": [
+      0.0,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "\n",
+    "wall_s": 2.3
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "function_persists",
+    "passed": false,
+    "step_seconds": [
+      0.0,
+      0.01
+    ],
+    "codes": [
+      0,
+      127
+    ],
+    "reaped": 0,
+    "last_output": "[stderr] /bin/sh: 1: f: not found\n\nExit code: 127",
+    "wall_s": 3.0
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "heredoc",
+    "passed": true,
+    "step_seconds": [
+      0.04
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "45\n",
+    "wall_s": 3.2
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "unbalanced_quote",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      0.01
+    ],
+    "codes": [
+      2,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "alive\n",
+    "wall_s": 3.4
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "stdin_read",
+    "passed": true,
+    "step_seconds": [
+      0.0,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "next\n",
+    "wall_s": 3.1
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "exit_code",
+    "passed": true,
+    "step_seconds": [
+      0.01
+    ],
+    "codes": [
+      1
+    ],
+    "reaped": 0,
+    "last_output": "<no output>\n\nExit code: 1",
+    "wall_s": 3.4
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "timeout_returns",
+    "passed": true,
+    "step_seconds": [
+      2.01,
+      0.0
+    ],
+    "codes": [
+      124,
+      0
+    ],
+    "reaped": 1,
+    "last_output": "after\n",
+    "wall_s": 4.7
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "timeout_grandchild_pipe",
+    "passed": true,
+    "step_seconds": [
+      2.01,
+      0.01
+    ],
+    "codes": [
+      124,
+      0
+    ],
+    "reaped": 2,
+    "last_output": "after\n",
+    "wall_s": 5.6
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "background_survives_timeout",
+    "passed": true,
+    "step_seconds": [
+      0.0,
+      1.0,
+      0.01
+    ],
+    "codes": [
+      0,
+      124,
+      0
+    ],
+    "reaped": 1,
+    "last_output": "bg-alive\n",
+    "wall_s": 4.0
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "exit_recovers",
+    "passed": true,
+    "step_seconds": [
+      0.0,
+      0.0
+    ],
+    "codes": [
+      7,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "alive\n",
+    "wall_s": 2.7
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "huge_output_bounded_tail_kept",
+    "passed": false,
+    "step_seconds": [
+      0.07
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\n\n... Output truncated at 100000 bytes.",
+    "wall_s": 3.2
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "progress_bar_collapsed",
+    "passed": false,
+    "step_seconds": [
+      0.01
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "10%\n50%\n100%\ndone\n",
+    "wall_s": 3.7
+  },
+  {
+    "adapter": "deepagents",
+    "scenario": "busy_loop_recovers",
+    "passed": true,
+    "step_seconds": [
+      2.01,
+      0.01
+    ],
+    "codes": [
+      124,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "ok\n",
+    "wall_s": 5.8
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "cd_persists",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      0.01
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\n/tmp/tb_pydanticai-shell_9iwplp4l/a/b\n",
+    "wall_s": 0.8
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "env_persists",
+    "passed": false,
+    "step_seconds": [
+      0.03,
+      0.01
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\n\n",
+    "wall_s": 1.2
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "function_persists",
+    "passed": false,
+    "step_seconds": [
+      0.01,
+      0.0
+    ],
+    "codes": [
+      0,
+      127
+    ],
+    "reaped": 0,
+    "last_output": "[stderr]\n/bin/sh: 1: f: not found\n\n[exit code: 127]",
+    "wall_s": 0.8
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "heredoc",
+    "passed": true,
+    "step_seconds": [
+      0.06
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\n45\n",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "unbalanced_quote",
+    "passed": true,
+    "step_seconds": [
+      0.03,
+      0.01
+    ],
+    "codes": [
+      2,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\nalive\n",
+    "wall_s": 1.3
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "stdin_read",
+    "passed": false,
+    "step_seconds": [
+      20.03,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\nnext\n",
+    "wall_s": 21.2
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "exit_code",
+    "passed": true,
+    "step_seconds": [
+      0.02
+    ],
+    "codes": [
+      1
+    ],
+    "reaped": 0,
+    "last_output": "(no output)\n[exit code: 1]",
+    "wall_s": 1.2
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "timeout_returns",
+    "passed": true,
+    "step_seconds": [
+      2.03,
+      0.01
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\nafter\n",
+    "wall_s": 3.3
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "timeout_grandchild_pipe",
+    "passed": true,
+    "step_seconds": [
+      2.03,
+      0.01
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\nafter\n",
+    "wall_s": 2.8
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "background_survives_timeout",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      1.01,
+      0.01
+    ],
+    "codes": [
+      0,
+      0,
+      0
+    ],
+    "reaped": 1,
+    "last_output": "[stdout]\nbg-alive\n",
+    "wall_s": 1.8
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "exit_recovers",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      0.0
+    ],
+    "codes": [
+      7,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\nalive\n",
+    "wall_s": 0.6
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "huge_output_bounded_tail_kept",
+    "passed": true,
+    "step_seconds": [
+      0.07
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "hij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghiEND\n",
+    "wall_s": 0.7
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "progress_bar_collapsed",
+    "passed": false,
+    "step_seconds": [
+      0.01
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\n10%\r50%\r100%\ndone\n",
+    "wall_s": 0.6
+  },
+  {
+    "adapter": "pydanticai-shell",
+    "scenario": "busy_loop_recovers",
+    "passed": true,
+    "step_seconds": [
+      2.02,
+      0.0
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "[stdout]\nok\n",
+    "wall_s": 2.8
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "cd_persists",
+    "passed": false,
+    "step_seconds": [
+      0.07,
+      0.06
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "1` to stop the whole process tree)\nOutput: /tmp/harness-shell-6q17s9e8/output.log\nStatus: /tmp/harness-shell-6q17s9e8/status.json\n{\"pid\": 13243, \"exit_code\": 0}",
+    "wall_s": 0.8
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "env_persists",
+    "passed": false,
+    "step_seconds": [
+      0.14,
+      0.13
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "6` to stop the whole process tree)\nOutput: /tmp/harness-shell-urk3ut52/output.log\nStatus: /tmp/harness-shell-urk3ut52/status.json\n{\"pid\": 13258, \"exit_code\": 0}",
+    "wall_s": 1.2
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "function_persists",
+    "passed": false,
+    "step_seconds": [
+      0.09,
+      0.08
+    ],
+    "codes": [
+      0,
+      127
+    ],
+    "reaped": 0,
+    "last_output": " to stop the whole process tree)\nOutput: /tmp/harness-shell-c479ahdx/output.log\nStatus: /tmp/harness-shell-c479ahdx/status.json\n{\"pid\": 13265, \"exit_code\": 127}",
+    "wall_s": 1.0
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "heredoc",
+    "passed": true,
+    "step_seconds": [
+      0.13
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "9` to stop the whole process tree)\nOutput: /tmp/harness-shell-7_vewdyk/output.log\nStatus: /tmp/harness-shell-7_vewdyk/status.json\n{\"pid\": 13271, \"exit_code\": 0}",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "unbalanced_quote",
+    "passed": true,
+    "step_seconds": [
+      0.07,
+      0.09
+    ],
+    "codes": [
+      2,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "0` to stop the whole process tree)\nOutput: /tmp/harness-shell-p5g4tlxl/output.log\nStatus: /tmp/harness-shell-p5g4tlxl/status.json\n{\"pid\": 13283, \"exit_code\": 0}",
+    "wall_s": 1.4
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "stdin_read",
+    "passed": true,
+    "step_seconds": [
+      0.13,
+      0.06
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "3` to stop the whole process tree)\nOutput: /tmp/harness-shell-sq83i0uo/output.log\nStatus: /tmp/harness-shell-sq83i0uo/status.json\n{\"pid\": 13298, \"exit_code\": 0}",
+    "wall_s": 1.2
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "exit_code",
+    "passed": true,
+    "step_seconds": [
+      0.07
+    ],
+    "codes": [
+      1
+    ],
+    "reaped": 0,
+    "last_output": "7` to stop the whole process tree)\nOutput: /tmp/harness-shell-3vkwo0gu/output.log\nStatus: /tmp/harness-shell-3vkwo0gu/status.json\n{\"pid\": 13291, \"exit_code\": 1}",
+    "wall_s": 1.1
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "timeout_returns",
+    "passed": true,
+    "step_seconds": [
+      2.03,
+      0.08
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 3,
+    "last_output": "1` to stop the whole process tree)\nOutput: /tmp/harness-shell-54jgbjbx/output.log\nStatus: /tmp/harness-shell-54jgbjbx/status.json\n{\"pid\": 13353, \"exit_code\": 0}",
+    "wall_s": 3.6
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "timeout_grandchild_pipe",
+    "passed": true,
+    "step_seconds": [
+      2.02,
+      0.07
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 4,
+    "last_output": "5` to stop the whole process tree)\nOutput: /tmp/harness-shell-uihiuqfr/output.log\nStatus: /tmp/harness-shell-uihiuqfr/status.json\n{\"pid\": 13357, \"exit_code\": 0}",
+    "wall_s": 3.4
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "background_survives_timeout",
+    "passed": true,
+    "step_seconds": [
+      0.06,
+      1.01,
+      0.06
+    ],
+    "codes": [
+      0,
+      null,
+      0
+    ],
+    "reaped": 3,
+    "last_output": "4` to stop the whole process tree)\nOutput: /tmp/harness-shell-9ma1_tws/output.log\nStatus: /tmp/harness-shell-9ma1_tws/status.json\n{\"pid\": 13346, \"exit_code\": 0}",
+    "wall_s": 2.2
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "exit_recovers",
+    "passed": true,
+    "step_seconds": [
+      0.07,
+      0.06
+    ],
+    "codes": [
+      7,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "8` to stop the whole process tree)\nOutput: /tmp/harness-shell-t3ixk5_1/output.log\nStatus: /tmp/harness-shell-t3ixk5_1/status.json\n{\"pid\": 13322, \"exit_code\": 0}",
+    "wall_s": 1.0
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "huge_output_bounded_tail_kept",
+    "passed": true,
+    "step_seconds": [
+      0.11
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "8` to stop the whole process tree)\nOutput: /tmp/harness-shell-2n1t5_77/output.log\nStatus: /tmp/harness-shell-2n1t5_77/status.json\n{\"pid\": 13331, \"exit_code\": 0}",
+    "wall_s": 1.0
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "progress_bar_collapsed",
+    "passed": false,
+    "step_seconds": [
+      0.06
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "5` to stop the whole process tree)\nOutput: /tmp/harness-shell-jgbzzg8p/output.log\nStatus: /tmp/harness-shell-jgbzzg8p/status.json\n{\"pid\": 13337, \"exit_code\": 0}",
+    "wall_s": 1.0
+  },
+  {
+    "adapter": "pydanticai-coder",
+    "scenario": "busy_loop_recovers",
+    "passed": true,
+    "step_seconds": [
+      2.03,
+      0.09
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 2,
+    "last_output": "3` to stop the whole process tree)\nOutput: /tmp/harness-shell-2kky_4eg/output.log\nStatus: /tmp/harness-shell-2kky_4eg/status.json\n{\"pid\": 13375, \"exit_code\": 0}",
+    "wall_s": 2.9
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "cd_persists",
+    "passed": false,
+    "step_seconds": [
+      0.01,
+      0.01
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 2d9f19\nWall time: 0.0135 seconds\nProcess exited with code 0\nOutput:\n/tmp/tb_openai-agents_t8xybhjg\n",
+    "wall_s": 2.8
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "env_persists",
+    "passed": false,
+    "step_seconds": [
+      0.01,
+      0.02
+    ],
+    "codes": [
+      0,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 4e545a\nWall time: 0.0177 seconds\nProcess exited with code 0\nOutput:\n\n",
+    "wall_s": 3.0
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "function_persists",
+    "passed": false,
+    "step_seconds": [
+      0.01,
+      0.01
+    ],
+    "codes": [
+      0,
+      127
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 50217f\nWall time: 0.0107 seconds\nProcess exited with code 127\nOutput:\nsh: 1: f: not found\n",
+    "wall_s": 3.3
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "heredoc",
+    "passed": true,
+    "step_seconds": [
+      0.02
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 479b2c\nWall time: 0.0150 seconds\nProcess exited with code 0\nOutput:\n45\n",
+    "wall_s": 3.6
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "unbalanced_quote",
+    "passed": true,
+    "step_seconds": [
+      0.01,
+      0.01
+    ],
+    "codes": [
+      2,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 19c48e\nWall time: 0.0100 seconds\nProcess exited with code 0\nOutput:\nalive\n",
+    "wall_s": 4.1
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "stdin_read",
+    "passed": false,
+    "step_seconds": [
+      20.04,
+      0.0
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: a54e86\nWall time: 0.0031 seconds\nProcess exited with code 0\nOutput:\nnext\n",
+    "wall_s": 23.8
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "exit_code",
+    "passed": true,
+    "step_seconds": [
+      0.0
+    ],
+    "codes": [
+      1
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: ad7d15\nWall time: 0.0035 seconds\nProcess exited with code 1\nOutput:\n",
+    "wall_s": 3.4
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "timeout_returns",
+    "passed": true,
+    "step_seconds": [
+      2.01,
+      0.01
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 716017\nWall time: 0.0112 seconds\nProcess exited with code 0\nOutput:\nafter\n",
+    "wall_s": 5.5
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "timeout_grandchild_pipe",
+    "passed": true,
+    "step_seconds": [
+      2.02,
+      0.01
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 3,
+    "last_output": "Chunk ID: 59b23b\nWall time: 0.0128 seconds\nProcess exited with code 0\nOutput:\nafter\n",
+    "wall_s": 5.7
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "background_survives_timeout",
+    "passed": false,
+    "step_seconds": [
+      0.01,
+      1.01,
+      0.02
+    ],
+    "codes": [
+      0,
+      null,
+      2
+    ],
+    "reaped": 1,
+    "last_output": "r\nkill -l [exitstatus]\ncat: bg.pid: No such file or directory\nsh: 1: kill: Usage: kill [-s sigspec | -signum | -sigspec] [pid | job]... or\nkill -l [exitstatus]\n",
+    "wall_s": 4.3
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "exit_recovers",
+    "passed": true,
+    "step_seconds": [
+      0.0,
+      0.0
+    ],
+    "codes": [
+      7,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: cb537b\nWall time: 0.0024 seconds\nProcess exited with code 0\nOutput:\nalive\n",
+    "wall_s": 2.4
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "huge_output_bounded_tail_kept",
+    "passed": false,
+    "step_seconds": [
+      0.27
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "hij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghiEND\n",
+    "wall_s": 2.6
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "progress_bar_collapsed",
+    "passed": false,
+    "step_seconds": [
+      0.01
+    ],
+    "codes": [
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 58e187\nWall time: 0.0143 seconds\nProcess exited with code 0\nOutput:\n10%\r50%\r100%\ndone\n",
+    "wall_s": 2.4
+  },
+  {
+    "adapter": "openai-agents",
+    "scenario": "busy_loop_recovers",
+    "passed": true,
+    "step_seconds": [
+      2.0,
+      0.0
+    ],
+    "codes": [
+      null,
+      0
+    ],
+    "reaped": 0,
+    "last_output": "Chunk ID: 300f5d\nWall time: 0.0033 seconds\nProcess exited with code 0\nOutput:\nok\n",
+    "wall_s": 4.4
+  }
+]

@@ -31,6 +31,7 @@ from .framework import EvalTask  # noqa: E402
 from .tasks import select  # noqa: E402
 
 _print_lock = threading.Lock()
+STACK = "polymath-v1"  # set from --stack
 
 
 def run_one(rt: Runtime, task: EvalTask, out: Path, rep: int, mode: str) -> dict[str, Any]:
@@ -43,34 +44,49 @@ def run_one(rt: Runtime, task: EvalTask, out: Path, rep: int, mode: str) -> dict
     try:
         ctx = task.setup(ws) or {}
         instruction = task.instruction.format(**{k: v for k, v in ctx.items() if not k.startswith("_") and isinstance(v, (str, int, float))}) if "{" in task.instruction and ctx else task.instruction
-        res = rt.run(
-            instruction,
-            ws,
-            acceptance_criteria=task.criteria,
-            budget=Budget(max_turns=task.max_turns, max_wall_s=task.max_wall_s, max_tokens=4_000_000, max_tool_calls=task.max_turns * 4),
-            mode=mode,
-            session_id=f"{task.id}__r{rep}",
-        )
-        rec.update(
-            state=res.state,
-            stop_reason=res.stop_reason,
-            turns=res.turns,
-            tool_calls=res.tool_calls,
-            input_tokens=res.usage.input_tokens,
-            output_tokens=res.usage.output_tokens,
-            requests=res.usage.requests,
-            duration_s=round(res.duration_s, 1),
-            models=res.models_used,
-            verifications=len(res.verification),
-            answer=(res.answer or "")[:600],
-            error=res.error,
-        )
+        if STACK != "polymath-v1":
+            from .backends import BACKENDS
+
+            res = BACKENDS[STACK](instruction, ws, model=rt.cfg.model, max_turns=task.max_turns)
+            rec.update(
+                state=res.state,
+                stop_reason=res.stop_reason,
+                turns=res.turns,
+                input_tokens=res.input_tokens,
+                output_tokens=res.output_tokens,
+                duration_s=round(res.duration_s, 1),
+                answer=(res.answer or "")[:600],
+                error=res.error,
+            )
+        else:
+            res = rt.run(
+                instruction,
+                ws,
+                acceptance_criteria=task.criteria,
+                budget=Budget(max_turns=task.max_turns, max_wall_s=task.max_wall_s, max_tokens=4_000_000, max_tool_calls=task.max_turns * 4),
+                mode=mode,
+                session_id=f"{task.id}__r{rep}",
+            )
+            rec.update(
+                state=res.state,
+                stop_reason=res.stop_reason,
+                turns=res.turns,
+                tool_calls=res.tool_calls,
+                input_tokens=res.usage.input_tokens,
+                output_tokens=res.usage.output_tokens,
+                requests=res.usage.requests,
+                duration_s=round(res.duration_s, 1),
+                models=res.models_used,
+                verifications=len(res.verification),
+                answer=(res.answer or "")[:600],
+                error=res.error,
+            )
         try:
             passed, detail = task.verify(ws, res, ctx)
         except Exception as e:
             passed, detail = False, f"verifier crashed: {type(e).__name__}: {e}"
         rec.update(passed=bool(passed), detail=detail)
-        sess = rt.session_dir(f"{task.id}__r{rep}")
+        sess = rt.session_dir(f"{task.id}__r{rep}")  # only polymath-v1 writes sessions; others: flags stay False/0
         rec["delegated"] = any('"subagent.spawned"' in l for l in open(sess / "events.jsonl", encoding="utf-8")) if (sess / "events.jsonl").exists() else False
         rec["compactions"] = sum(1 for l in open(sess / "events.jsonl", encoding="utf-8") if '"context.compacted"' in l) if (sess / "events.jsonl").exists() else 0
     except Exception as e:
@@ -152,8 +168,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--context-window", type=int, help="override the model window (context-stress runs)")
     ap.add_argument("--max-output-tokens", type=int, help="override the per-response output budget")
     ap.add_argument("--label", default="", help="free-text label stored in results (e.g. harness version)")
+    ap.add_argument("--stack", default="polymath-v1", help="agent stack: polymath-v1 | deepagents | pydanticai-coder | openai-agents | polymath-v2")
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
+    global STACK
+    STACK = args.stack
 
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -170,7 +189,7 @@ def main(argv: list[str] | None = None) -> int:
         cfg = cfg.replace(model_params=mp)
     rt = Runtime(cfg, console=False)
     tasks = select(args.tasks)
-    meta = {"label": args.label, "context_window": cfg.context_window, "max_output_tokens": cfg.max_output_for(cfg.model), "router": cfg.router, "model": cfg.model, "mode": args.mode, "workers": args.workers, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "fallbacks": cfg.fallback_models, "utility_model": cfg.utility_model, "n_tasks": len(tasks), "repeat": args.repeat}
+    meta = {"stack": args.stack, "label": args.label, "context_window": cfg.context_window, "max_output_tokens": cfg.max_output_for(cfg.model), "router": cfg.router, "model": cfg.model, "mode": args.mode, "workers": args.workers, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "fallbacks": cfg.fallback_models, "utility_model": cfg.utility_model, "n_tasks": len(tasks), "repeat": args.repeat}
     print(f"Running {len(tasks)} tasks × {args.repeat} on {cfg.model} (mode={args.mode}, workers={args.workers})", flush=True)
     jobs = [(t, r) for r in range(1, args.repeat + 1) for t in tasks]
     records: list[dict[str, Any]] = []

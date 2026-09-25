@@ -9,7 +9,23 @@ description = "Polymath: a generalist agent harness — event-sourced, resumable
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-dependencies = []  # standard library only, by design (ADR-006)
+dependencies = []  # the v1 core stays standard-library only (ADR-006); v2 layers are optional extras
+
+[project.optional-dependencies]
+# Account-wide rate governor in front of any OpenAI-compatible endpoint (docs/research/04-egress-governor.md).
+egress = ["aiohttp>=3.14"]
+# Prebuilt stacks compared in the v2 bake-offs (docs/research/01, 03). Pinned to the versions measured.
+research = [
+    "aiohttp>=3.14",
+    "langchain==1.4.2",
+    "langchain-openai==1.6.6",
+    "deepagents==0.7.19",
+    "pydantic-ai-slim[openai]==2.49.0",
+    "pydantic-ai-harness==0.34.0",
+    "openai-agents==0.22.3",
+    "httpx2>=2.13",
+    "tenacity>=9.1",
+]
 
 [project.scripts]
 polymath = "polymath.cli:main"
