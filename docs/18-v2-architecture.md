@@ -112,15 +112,16 @@ python -m polymath.v2 "make the tests in tests/ pass" --workspace ./repo -v
 
 Each run ends with a telemetry line: requests, tokens, evictions, **reacquisitions**, ledger injections. In the eval harness: `--stack polymath-v2` (or the ablations `polymath-v2-terminal`, `-context`, `-clear`, `-recall`).
 
-## 7. What is proven and what is not (as of this writing)
+## 7. What is proven and what is not
 
 | Claim | Status |
 |---|---|
-| The terminal is more robust than every prebuilt shell | **Measured** (R3), deterministic |
-| The governor removes rate-limit losses across stacks | **Measured** live: 0 give-ups under 8 concurrent agents (R4) |
-| Evicted results are recoverable exactly, with pairing intact, and the ledger stays out of history | **Tested offline** against a real agent (`tests/test_v2.py`) |
-| v2 ≥ the prebuilt `Coder` on the 28-task core suite | **Running** (R5, `core-polymath-v2` vs `pydanticai-coder`) |
-| Addressable eviction reduces lost-fact failures and reacquisition vs irreversible clearing | **Running** (retention arms at a 16 k window) |
-| The ledger reduces state-reporting errors | **Running** (`ret-rename-changes`) |
-
-Results land in `docs/research/05-stack-bakeoff.md` and `docs/research/06-retention.md`. The defaults in §5 are provisional until then.
+| The terminal is more robust than every prebuilt shell | **Measured** (R3), deterministic: 14/14 vs best prebuilt 10/14 |
+| The governor removes rate-limit losses across stacks | **Measured** live (R4): 0 give-ups under 8 agents in normal conditions. During a provider outage the loss-tolerant, per-model version turned failures into queueing; a few were still given up and are visible |
+| Evicted results are recoverable exactly, pairing intact, ledger kept out of history | **Tested offline** against a real agent (`tests/test_v2.py`) |
+| v2 ≥ the prebuilt `Coder` on the 28-task core suite | **Parity** (R5 §5.1): 50/56 each over two repeats, sign test p = 1.00. The one systematic difference (`git-feature-flow`, both repeats) favours v2 through terminal hygiene |
+| Eviction policy under context pressure | **Measured** (R6): the prebuilt clearing failed `ret-token-audit` 0/2 by clearing an 11-token plan (the model hallucinated services); every v2 policy passed 4/4. The **size floor** is what matters |
+| Addressable eviction (H1) reduces lost-fact failures | **Not supported on this model** (R6 F2): the model keeps noted facts in its reasoning, which is carried back. Recall rescued runs only where the model hadn't taken notes |
+| Stub previews | **Measured** (R6 F5): 3-line tail previews cut recalls 7 → 1 and tokens −55 % with no loss; now the default |
+| The ledger reduces state-reporting errors | **No pass-rate difference observed**; made the rename task the cheapest v2 run (R6 F4) |
+| Which prebuilt stack is the best foundation | [ADR-011](adr/ADR-011-v2-foundation.md); five-stack table on one healthy model in R5 §5.2 |
