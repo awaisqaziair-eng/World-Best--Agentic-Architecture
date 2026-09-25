@@ -9,7 +9,7 @@ These notes back the v2 decision to build on **prebuilt SDKs, enhanced only wher
 
 | Note | Question | Status |
 |---|---|---|
-| [R1 — SDK landscape](01-sdk-landscape.md) | What do LangChain, deepagents, Pydantic AI + harness and the OpenAI Agents SDK actually do? Where do they fail? | Verified in source; 10 reproducible findings (D1–D10) |
+| [R1 — SDK landscape](01-sdk-landscape.md) | What do LangChain, deepagents, Pydantic AI + harness and the OpenAI Agents SDK actually do? Where do they fail? | Verified in source; 11 reproducible findings (D1–D11) |
 | [R2 — Context-management literature](02-context-management-literature.md) | What does research establish about eviction, compaction and recall, and what do prebuilt SDKs leave open? | Review + falsifiable hypotheses H1–H5 |
 | [R3 — Terminal bake-off](03-terminal-bakeoff.md) | Is Polymath's terminal still worth carrying into v2? | Measured: 14/14 vs best prebuilt 10/14; upstream bug D1 found |
 | [R4 — Egress governor](04-egress-governor.md) | How do we stop account-level rate limits from deciding eval outcomes, for every SDK at once? | Implemented; 0 give-ups under 8-agent load |

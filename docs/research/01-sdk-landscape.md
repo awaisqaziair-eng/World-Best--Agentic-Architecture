@@ -55,7 +55,7 @@ Documentation answers neither reliably: docs describe intent, and defaults decid
 
 ## 4. Defects and hazards found (each reproducible)
 
-These are the concrete places where "use it as shipped" produces a wrong result or a lost run, which is precisely where enhancement is justified.
+These are the concrete places where "use it as shipped" produces a wrong result or a lost run (D11 was found later, in R5), which is precisely where enhancement is justified.
 
 | # | SDK | Finding | Evidence | Severity for autonomous agents |
 |---|---|---|---|---|
@@ -69,6 +69,7 @@ These are the concrete places where "use it as shipped" produces a wrong result 
 | D8 | langchain 1.4.2 | Shell timeout restarts the session after a 10 s grace and discards all partial output | R3 §5.1; `shell_tool.py:186–215, 300–305` | Medium |
 | D9 | openai-agents 0.22.3 | `Compaction` is server-side only; no client fallback | `compaction.py:188–208` | High off OpenAI: long runs have no compaction |
 | D10 | pydantic-ai-harness 0.34 | `ClearToolResults` is irreversible; `Spill` covers only outputs that were large when produced | harness `compaction/README.md` §receipts | Medium: forces re-execution, which may not reproduce |
+| D11 | openai-agents 0.22.3 | A model emitting a **hosted** tool call the agent didn't register (`apply_patch` on `nemotron-3-ultra` via the Responses API) raises `ModelBehaviorError` and **aborts the run** instead of returning an error the model can recover from | R5 Ultra run, `debug-inventory` | High: the same fragility class as D2, triggered by the model, not by the task |
 
 ## 5. What this implies for v2
 
