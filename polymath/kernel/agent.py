@@ -437,20 +437,36 @@ class Agent:
                 "harness",
             )
             finish_only = [s for s in specs if s["function"]["name"] == "finish"]
-            try:
-                msgs = self.context.prepare(self.log, self.agent_id, self.system, finish_only)
-                resp = self.client.complete(ChatRequest(messages=[self.system, *msgs], tools=finish_only, purpose="agent"))
+            # Attempt 1: finish is the only tool offered. Attempt 2 (v1.2, measured: Nemotron called a
+            # non-offered tool here): force it with a named tool_choice.
+            for choice in (None, {"type": "function", "function": {"name": "finish"}}):
+                try:
+                    msgs = self.context.prepare(self.log, self.agent_id, self.system, finish_only)
+                    resp = self.client.complete(ChatRequest(messages=[self.system, *msgs], tools=finish_only, tool_choice=choice, purpose="agent"))
+                except ModelError as e:
+                    self.log.append(ev.MODEL_ERROR, e.to_dict(), agent=self.agent_id)
+                    break
                 self.log.append(ev.MODEL_RESPONSE, {"response": resp.to_dict(), "wrap_up": True}, agent=self.agent_id)
                 for tc in resp.tool_calls:
                     if tc.name == "finish":
-                        answer = str(tc.arguments.get("answer") or "")
+                        answer = str(tc.arguments.get("answer") or "") or answer
                         self.log.append(ev.TOOL_RESULT, {"result": ToolResult(tc.id, tc.name, "Final answer submitted.").to_dict()}, agent=self.agent_id)
                     else:
                         self.log.append(ev.TOOL_RESULT, {"result": ToolResult(tc.id, tc.name, "Not executed: budget exhausted.", is_error=True).to_dict()}, agent=self.agent_id)
-                answer = answer or (resp.content or None)
-            except ModelError as e:
-                self.log.append(ev.MODEL_ERROR, e.to_dict(), agent=self.agent_id)
+                answer = answer or (resp.content or "").strip() or None
+                if answer:
+                    break
+            if not answer:
+                answer = self._synthesised_partial_answer(reason)
         return self._finalize(FAILED, STOP_BUDGET, answer, error=reason)
+
+    def _synthesised_partial_answer(self, reason: str) -> str:
+        """Deterministic last resort: report plan state and the latest progress notes."""
+        st = project(self.log.events(agent=self.agent_id), self.agent_id)
+        plan = "\n".join(f"- [{i.get('status')}] {i.get('content')}" for i in st.plan) or "- (no plan recorded)"
+        said = [e.msg.content.strip() for e in st.entries if e.msg.role == "assistant" and e.msg.content and e.msg.content.strip()]
+        recent = "\n".join(f"> {s[:300]}" for s in said[-3:]) or "> (no progress messages)"
+        return f"[Partial result — {reason}; the model did not submit a final answer.]\nPlan state:\n{plan}\nLast progress messages:\n{recent}"
 
     def _finalize(self, state: str, stop: str, answer: str | None, artifacts: list[str] | None = None, *, error: str | None = None) -> RunResult:
         st = project(self.log.events(agent=self.agent_id), self.agent_id)

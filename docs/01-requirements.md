@@ -70,7 +70,7 @@
 | NFR-07 | Memory safety | Unbounded tool output never exhausts memory | ✅ 20 MB flood test: capture bounded to ~4 MB |
 | NFR-08 | Concurrency | Parallel sub-agents never corrupt the log or each other's shells | ✅ 8-thread append test; per-agent shell scratch |
 | NFR-09 | Observability | Every model call and tool call is traceable with timing and tokens | ✅ |
-| NFR-10 | Testability | Full offline suite runs in < 30 s | ✅ ~12 s, 108 tests |
+| NFR-10 | Testability | Full offline suite runs in < 30 s | ✅ ~12 s, 122 tests |
 | NFR-11 | Spec fidelity | Emitted artifacts validate against `spec/schemas` | ✅ `test_specs.py` |
 
 ## 5. Acceptance criteria for v1.0

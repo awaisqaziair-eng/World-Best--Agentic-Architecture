@@ -76,7 +76,7 @@ Checked before **every** model call against the task's `Budget`:
 | `max_wall_s` | 3600 | same | same |
 | `max_tool_calls` | 400 | same | same |
 
-**Wrap-up turn:** the model is asked for its best final answer with *only* the `finish` tool available, so even an exhausted run returns a useful partial result.
+**Wrap-up turn:** the model is asked for its best final answer with *only* the `finish` tool available; if it ignores that, a second attempt forces `finish` via a named `tool_choice`; if that also fails, the kernel synthesises a partial answer from the plan state and the last progress messages. An exhausted run therefore always returns something useful (test: `test_wrap_up_forces_finish_then_synthesises`).
 
 ### 2.3 Frame (context)
 See [05-context-engineering.md](05-context-engineering.md). Output: a message list guaranteed to fit `window − max_output_tokens`, with every tool call paired to its result.
@@ -131,7 +131,7 @@ A `failed` session is **resumable** (`polymath resume <id>`): e.g. after a provi
 
 | Failure | Where caught | Recovery | Model sees |
 |---|---|---|---|
-| 429 / 5xx / timeout / malformed 200 | gateway | backoff with jitter (honours `Retry-After`), ≤ `max_retries` | nothing |
+| 429 / 5xx / idle timeout / broken stream / malformed 200 | gateway | backoff with jitter (honours `Retry-After`), ≤ `max_retries`; streaming makes the timeout an *idle* timeout, so long generations are never cut ([ADR-010](adr/ADR-010-streaming-idle-timeouts.md)) | nothing |
 | Endpoint rejects `tools` | gateway | sticky downgrade to text protocol, immediate retry | nothing |
 | Model unhealthy (retries exhausted, 404, 401) | `FallbackClient` | next model; breaker opens after 3 failures for 90 s | nothing |
 | Context overflow (400 "maximum context length") | kernel | force compaction, shrink believed window 20 %, retry (≤ 3) | compacted context |

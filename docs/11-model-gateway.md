@@ -9,7 +9,7 @@ The gateway makes an unreliable, heterogeneous set of model endpoints look like 
 ```mermaid
 flowchart TB
     K["Kernel"] --> F["FallbackClient\nprimary → fallbacks, per-model circuit breakers"]
-    F --> C1["OpenAICompatClient (primary)\nretries · backoff · overflow detection · protocol auto-downgrade"]
+    F --> C1["OpenAICompatClient (primary)\nSSE streaming · retries · backoff · overflow detection · protocol auto-downgrade"]
     F --> C2["OpenAICompatClient (fallback 1)"]
     F --> C3["OpenAICompatClient (fallback 2)"]
     C1 --> P["Protocol\nNative ⇄ Text"]

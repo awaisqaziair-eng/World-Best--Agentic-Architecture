@@ -33,7 +33,7 @@ sequenceDiagram
 
     T->>S: run(command, timeout)
     S->>S: write command to shell/<agent>/cmd_N_<nonce>.sh
-    S->>B: source 'cmd_N.sh' < /dev/null 2>&1; rc=$?; printf '\n%s %s %s\n' MARKER "$rc" "$PWD"
+    S->>B: source cmd_N.sh (stdin from /dev/null, 2>&1), then printf MARKER + exit code + PWD
     B->>P: executes (cwd/env persist in B)
     P-->>S: stdout+stderr stream (non-blocking reads, select 0.25 s)
     alt marker seen

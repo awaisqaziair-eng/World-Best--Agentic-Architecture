@@ -21,14 +21,16 @@ flowchart TB
 | Suite | File | Tests | What it proves |
 |---|---|---|---|
 | Foundation | `test_foundation.py` | 28 | lenient JSON, schema coercion/errors, event log (torn tail, corruption, 8-thread appends), BM25 memory, router (incl. regression for the `merge_intervals`→git bug) |
-| Gateway | `test_gateway.py` | 22 | protocol encode/decode edge cases, retry schedule & `Retry-After`, overflow detection, auth, protocol auto-downgrade, fail-over & breakers, record/replay divergence |
+| Gateway | `test_gateway.py` | 28 | protocol encode/decode edge cases, retry schedule & `Retry-After`, overflow detection, auth, protocol auto-downgrade, **SSE streaming** (split tool arguments, keep-alives, `stream_options` fallback, broken streams, error events), fail-over & breakers, record/replay divergence |
 | Tools | `test_tools.py` | 24 | persistent shell semantics under abuse, file/search tools, registry fault isolation, parallel ordering |
 | Context | `test_context.py` | 7 | projection, pairing invariant after clearing/compaction/interruption, fallback summaries, emergency truncation, calibration |
-| Kernel | `test_kernel.py` | 22 | every stop condition, nudges, verification loops, budgets, overflow recovery, resume, delegation, replay, span conventions |
+| Kernel | `test_kernel.py` | 26 | every stop condition, final-prose detection, nudges, verification loops, budgets, wrap-up hardening, overflow recovery, resume (crash, `model_error`, budget, downtime-excluded wall time), delegation, replay, span conventions |
 | Workflow & chaos | `test_workflow_and_chaos.py` | 6 | workflow loops/journal skip, 9 injected faults of all 6 kinds, 5 random-fault seeds, real `kill -9` + resume |
 | Spec conformance | `test_specs.py` | 3 | every emitted artifact validates against `spec/schemas/*.json`; event types in code = spec |
 
-Run: `python3 -m unittest discover -s tests -t .` — 112 tests, ~12 s. The suite is run with `-W error::ResourceWarning` (leaked files/processes fail the build) and was run three consecutive times without flakes.
+Run: `python3 -m unittest discover -s tests -t .` — 122 tests, ~12 s. The suite is run with `-W error::ResourceWarning` (leaked files/processes fail the build) and was run three consecutive times without flakes.
+
+**Docs are tested too:** `python3 scripts/check_diagrams.py` parses all Mermaid diagrams with Mermaid's own parser (it caught 2 broken diagrams), and `docs/17` is regenerated from code by `scripts/gen_prompt_doc.py`.
 
 **Bugs found by the suite before any live run:** a race between parallel sub-agents sharing shell script files; text protocol dropping tool instructions when a request has no system message; `notes` failing when the session directory did not exist yet; leaked pipes when replacing a dead shell.
 

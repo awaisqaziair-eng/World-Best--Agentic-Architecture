@@ -1,0 +1,117 @@
+{
+  "meta": {
+    "label": "ablation: minimal harness",
+    "context_window": null,
+    "router": "heuristic",
+    "model": "z-ai/glm-5.3",
+    "mode": "minimal",
+    "workers": 3,
+    "started": "2026-09-25T00:38:25+00:00",
+    "fallbacks": [],
+    "utility_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "n_tasks": 6,
+    "repeat": 1
+  },
+  "records": [
+    {
+      "task": "hard-sessionize",
+      "category": "data",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 4,
+      "tool_calls": 4,
+      "input_tokens": 9562,
+      "output_tokens": 1452,
+      "requests": 4,
+      "duration_s": 22.0,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "Wrote `metrics.json` in the workspace with the sessionization results:\n\n```json\n{\n  \"total_sessions\": 89,\n  \"avg_session_seconds\": 2853.4,\n  \"top_user\": \"u002\",\n  \"long_sessions\": 76\n}\n```\n\nMethod: parsed all 428 events for 25 users, converted mixed-offset ISO-8601 timestamps to absolute instants (UTC), sorted per user, and split on gaps > 30 minutes (strictly more than; gaps of exactly 1800s would stay in-session, though none occurred). Session duration = last event \u2212 first event (0 for single-event sessions).\n\nVerification: a second, independently structured implementation (epoch-seconds, di",
+      "error": null,
+      "passed": true,
+      "detail": "4 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 22.0
+    },
+    {
+      "task": "hard-bug-hunt",
+      "category": "debugging",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 8,
+      "tool_calls": 10,
+      "input_tokens": 34717,
+      "output_tokens": 9492,
+      "requests": 8,
+      "duration_s": 170.6,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "Fixed 4 bugs in the `ledger` package; `python3 -m unittest discover -s tests -t . -v` now passes (Ran 1 test \u2014 OK).\n\nBugs found and fixed (all general fixes, no special-casing):\n\n1. **`ledger/money.py` \u2014 float truncation in `to_cents`**: `int(float(amount) * 100)` truncates binary-float error, so \"0.29\" \u2192 28 and \"19.99\" \u2192 1998 cents. Replaced with exact `Decimal` arithmetic (`Decimal(amount.replace(\",\", \"\")) * 100`, rounded half-up to whole cents), plus a clear `ValueError` for unparseable strings.\n\n2. **`ledger/report.py` \u2014 exclusive end bound**: `start <= t.day < end` dropped the last day, c",
+      "error": null,
+      "passed": true,
+      "detail": "3 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 170.7
+    },
+    {
+      "task": "hard-flaky-api",
+      "category": "web",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 9,
+      "tool_calls": 9,
+      "input_tokens": 34874,
+      "output_tokens": 4752,
+      "requests": 9,
+      "duration_s": 95.9,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "Wrote `client.py` in the workspace with `fetch_all(base_url, ids)` (stdlib only: json, time, urllib).\n\nBehavior:\n- `GET {base_url}/items/{id}` per id; returns `{id: value}` dict.\n- 404 \u2192 maps the id to `None`, never retried.\n- 503 \u2192 retried up to 5 times with exponential backoff 0.05, 0.1, 0.2, 0.4, 0.8 s; raises `RuntimeError` if still failing after the 5th retry.\n- 200 \u2192 parses JSON and returns `value`.\n\nVerification (all passed):\n- Real service at http://127.0.0.1:42731: fetched 65 ids (0\u201359, 500, 999, 1000, 2000, 3000) in 4.5 s through many real 503s; every existing id returned value = id\u00d7",
+      "error": null,
+      "passed": true,
+      "detail": "4 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 96.8
+    },
+    {
+      "task": "hard-delegate-research",
+      "category": "research",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 5,
+      "tool_calls": 5,
+      "input_tokens": 21173,
+      "output_tokens": 2736,
+      "requests": 5,
+      "duration_s": 56.9,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "Created `products.json` in the workspace root, mapping each product to its current (actually released) version and current owning team:\n\n```json\n{\n  \"Aurora\":   {\"version\": \"4.2.1\",  \"owner\": \"Team Nimbus\"},\n  \"Borealis\": {\"version\": \"2.9.0\",  \"owner\": \"Team Quasar\"},\n  \"Cirrus\":   {\"version\": \"7.0.3\",  \"owner\": \"Team Helix\"},\n  \"Draco\":    {\"version\": \"1.14.2\", \"owner\": \"Team Nimbus\"},\n  \"Eos\":      {\"version\": \"3.3.0\",  \"owner\": \"Team Vega\"}\n}\n```\n\nMethod & verification:\n- Read every file in `kb/{aurora,borealis,cirrus,draco,eos}/` (release notes, ownership docs, draft proposals, meeting not",
+      "error": null,
+      "passed": true,
+      "detail": "10 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 56.9
+    }
+  ]
+}

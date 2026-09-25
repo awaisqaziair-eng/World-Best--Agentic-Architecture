@@ -65,7 +65,7 @@ flowchart TB
     end
     subgraph G["Model gateway"]
         FB["FallbackClient + CircuitBreakers\ngateway/resilience.py"]
-        OC["OpenAICompatClient\nretry · backoff · overflow detection"]
+        OC["OpenAICompatClient\nstreaming · retry · backoff · overflow detection"]
         PT["Protocols\nnative ⇄ text tool calls"]
         RR["Scripted · Recording · Replay\ngateway/testing.py"]
     end
@@ -160,7 +160,7 @@ sequenceDiagram
     K->>L: project(events) → state (turns, usage, plan…)
     K->>K: budget check (turns · tokens · time · tool calls)
     K->>C: prepare(system, tools)
-    C->>L: materialize view; maybe append context.cleared / context.compacted
+    C->>L: materialize view, maybe append context.cleared or context.compacted
     C-->>K: messages (≤ window − max_output)
     K->>G: complete(ChatRequest)
     G->>M: POST /chat/completions (retries, fail-over)
@@ -237,6 +237,6 @@ Process model inside one run: one kernel thread per agent; tool batches may fan 
 |---|---|---|
 | Language/runtime | Python ≥ 3.11, **standard library only** | Zero supply-chain surface, runs anywhere Python runs ([ADR-006](adr/ADR-006-stdlib-only-core.md)). |
 | Storage | JSONL files | Append-only, human-readable, crash-tolerant, trivially shippable. |
-| Model API | OpenAI-compatible chat completions | Every serving stack speaks it (NIM, vLLM, SGLang, TGI, OpenAI). |
+| Model API | OpenAI-compatible chat completions, **streamed (SSE)** | Every serving stack speaks it (NIM, vLLM, SGLang, TGI, OpenAI); streaming turns timeouts into idle timeouts ([ADR-010](adr/ADR-010-streaming-idle-timeouts.md)). |
 | Tool protocol | Native function calling, text fallback | Works with any instruction-following model ([ADR-005](adr/ADR-005-dual-tool-protocols.md)). |
 | Tracing | OTel GenAI semantic-convention names in OTLP-shaped JSON | Portable to any observability backend without an SDK. |

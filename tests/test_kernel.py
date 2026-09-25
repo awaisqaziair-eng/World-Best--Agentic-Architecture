@@ -94,6 +94,18 @@ class TestKernel(TempDirTest):
         self.assertEqual(res.answer, "partial: did 3 steps")
         self.assertEqual([t["function"]["name"] for t in cl.requests[-1].tools], ["finish"])
 
+    def test_wrap_up_forces_finish_then_synthesises(self):
+        # Model ignores the finish-only toolset twice (observed live with Nemotron-3-Super).
+        rt, cl = self.runtime(
+            [R("On it.", tool_calls=[("todo", {"items": [{"content": "parse", "status": "completed"}, {"content": "write", "status": "in_progress"}]})]), bash("echo 2"), bash("echo 3"), bash("echo 4")]
+        )
+        res = rt.run("x", self.ws, budget=Budget(max_turns=2))
+        self.assertEqual(res.stop_reason, "budget_exhausted")
+        self.assertEqual(cl.requests[-1].tool_choice, {"type": "function", "function": {"name": "finish"}})
+        self.assertIn("Partial result", res.answer)
+        self.assertIn("[in_progress] write", res.answer)
+        self.assertIn("On it.", res.answer)
+
     def test_budget_warning_at_80_percent(self):
         rt, cl = self.runtime([bash(f"echo {i}") for i in range(4)] + [finish("ok")])
         rt.run("x", self.ws, budget=Budget(max_turns=5))

@@ -1,0 +1,117 @@
+{
+  "meta": {
+    "label": "v1.1 full harness",
+    "context_window": null,
+    "router": "heuristic",
+    "model": "z-ai/glm-5.3",
+    "mode": "full",
+    "workers": 3,
+    "started": "2026-09-25T00:38:25+00:00",
+    "fallbacks": [],
+    "utility_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "n_tasks": 6,
+    "repeat": 1
+  },
+  "records": [
+    {
+      "task": "hard-sessionize",
+      "category": "data",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "text_answer",
+      "turns": 5,
+      "tool_calls": 4,
+      "input_tokens": 21875,
+      "output_tokens": 2053,
+      "requests": 5,
+      "duration_s": 71.1,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "`metrics.json` written to the workspace with:\n\n```json\n{\n  \"total_sessions\": 89,\n  \"avg_session_seconds\": 2853.4,\n  \"top_user\": \"u002\",\n  \"long_sessions\": 76\n}\n```\n\nHow it was computed and verified:\n- Parsed all 428 data rows (25 users) with `datetime.fromisoformat`, normalizing `Z` and mixed offsets to absolute instants; no rows dropped.\n- Per user, sorted events by instant and split on gaps > 1800 s; duration = last \u2212 first event of each session (0 for single-event sessions).\n- Cross-checked with a fully independent second implementation (manual offset\u2192epoch math, different sessionization lo",
+      "error": null,
+      "passed": true,
+      "detail": "4 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 71.1
+    },
+    {
+      "task": "hard-bug-hunt",
+      "category": "debugging",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 9,
+      "tool_calls": 15,
+      "input_tokens": 53036,
+      "output_tokens": 7154,
+      "requests": 9,
+      "duration_s": 146.0,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "Fixed three bugs in the `ledger` package; `python3 -m unittest discover -s tests -t . -v` now passes (1 test, OK).\n\nRoot causes (all three were needed to explain the exact \"110.28\" vs \"242.28\" failure):\n1. `ledger/report.py` \u2014 `total_usd` filtered with `start <= t.day < end`, making `end` exclusive despite the docstring saying \"both inclusive\". This dropped both 2026-01-31 transactions. Fixed to `start <= t.day <= end`.\n2. `ledger/money.py` \u2014 `to_cents` used `int(float(amount) * 100)`, which truncates due to binary float representation (e.g. `0.29*100 = 28.999\u2026` \u2192 28 cents, `19.99` \u2192 1998). Fi",
+      "error": null,
+      "passed": true,
+      "detail": "3 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 146.1
+    },
+    {
+      "task": "hard-flaky-api",
+      "category": "web",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 10,
+      "tool_calls": 13,
+      "input_tokens": 51578,
+      "output_tokens": 6285,
+      "requests": 10,
+      "duration_s": 246.0,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "Wrote `client.py` (standard library only: urllib.request, urllib.error, json, time) with `fetch_all(base_url, ids)` returning `{id: value}`, with `None` for unknown ids (404).\n\nBehavior:\n- 503 \u2192 retried up to 5 times with exponential backoff 0.05, 0.1, 0.2, 0.4, 0.8 s (initial attempt + 5 retries = 6 attempts max); if it still fails, RuntimeError is raised.\n- 404 \u2192 never retried; id maps to None.\n- Connection errors/timeouts are also retried; ids are URL-quoted; int and string ids both work.\n\nVerified against the live service at http://127.0.0.1:40117:\n- Batches of 220 ids (200 existing + 20 u",
+      "error": null,
+      "passed": true,
+      "detail": "4 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 247.2
+    },
+    {
+      "task": "hard-delegate-research",
+      "category": "research",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 9,
+      "tool_calls": 11,
+      "input_tokens": 198794,
+      "output_tokens": 15662,
+      "requests": 31,
+      "duration_s": 146.5,
+      "models": [
+        "z-ai/glm-5.3"
+      ],
+      "verifications": 0,
+      "answer": "Wrote `products.json` in the workspace root, mapping each product to its current released version and owning team:\n\n```json\n{\"Aurora\": {\"version\": \"4.2.1\", \"owner\": \"Team Nimbus\"}, \"Borealis\": {\"version\": \"2.9.0\", \"owner\": \"Team Quasar\"}, \"Cirrus\": {\"version\": \"7.0.3\", \"owner\": \"Team Helix\"}, \"Draco\": {\"version\": \"1.14.2\", \"owner\": \"Team Nimbus\"}, \"Eos\": {\"version\": \"3.3.0\", \"owner\": \"Team Vega\"}}\n```\n\nHow it was done: five sub-agents were dispatched in parallel via `delegate`, one per product line (aurora, borealis, cirrus, draco, eos), each reading all 8 files in its directory and reporting ",
+      "error": null,
+      "passed": true,
+      "detail": "10 checks passed",
+      "delegated": true,
+      "compactions": 0,
+      "wall_s": 146.5
+    }
+  ]
+}

@@ -130,7 +130,7 @@ print(res.state, res.stop_reason, res.answer, res.usage.total)
 ## 7. Testing
 
 ```bash
-python3 -m unittest discover -s tests -t .          # 108 offline tests, ~12 s, no network
+python3 -m unittest discover -s tests -t .          # 122 offline tests, ~12 s, no network
 python3 -m evals.reference                           # verifier self-test (34 tasks, both directions)
 python3 -m evals.runner --tasks core --out /tmp/run  # live evaluation (needs an API key)
 ```
