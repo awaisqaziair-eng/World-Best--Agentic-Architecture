@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "label": "v1.2 context stress: 30k window (13.6k usable)",
+    "context_window": 30000,
+    "router": "heuristic",
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "mode": "full",
+    "workers": 3,
+    "started": "2026-09-25T00:59:48+00:00",
+    "fallbacks": [],
+    "utility_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "n_tasks": 8,
+    "repeat": 1,
+    "wall_s": 377.4
+  },
+  "summary": {
+    "overall": {
+      "n": 8,
+      "passed": 8,
+      "pass_rate": 1.0,
+      "median_turns": 10.5,
+      "median_tokens": 60257,
+      "total_tokens": 507964,
+      "median_wall_s": 112.75
+    },
+    "by_category": {
+      "coding": {
+        "n": 1,
+        "passed": 1,
+        "pass_rate": 1.0,
+        "median_turns": 12,
+        "median_tokens": 89414,
+        "total_tokens": 89414,
+        "median_wall_s": 124.8
+      },
+      "data": {
+        "n": 2,
+        "passed": 2,
+        "pass_rate": 1.0,
+        "median_turns": 10.0,
+        "median_tokens": 61435,
+        "total_tokens": 122871,
+        "median_wall_s": 112.75
+      },
+      "debugging": {
+        "n": 2,
+        "passed": 2,
+        "pass_rate": 1.0,
+        "median_turns": 12.5,
+        "median_tokens": 82323,
+        "total_tokens": 164646,
+        "median_wall_s": 138.7
+      },
+      "research": {
+        "n": 1,
+        "passed": 1,
+        "pass_rate": 1.0,
+        "median_turns": 7,
+        "median_tokens": 32171,
+        "total_tokens": 32171,
+        "median_wall_s": 96.3
+      },
+      "web": {
+        "n": 1,
+        "passed": 1,
+        "pass_rate": 1.0,
+        "median_turns": 12,
+        "median_tokens": 72123,
+        "total_tokens": 72123,
+        "median_wall_s": 179.5
+      },
+      "writing": {
+        "n": 1,
+        "passed": 1,
+        "pass_rate": 1.0,
+        "median_turns": 5,
+        "median_tokens": 26739,
+        "total_tokens": 26739,
+        "median_wall_s": 52.3
+      }
+    }
+  },
+  "records": [
+    {
+      "task": "debug-crash-hardening",
+      "category": "debugging",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 9,
+      "tool_calls": 9,
+      "input_tokens": 44879,
+      "output_tokens": 3513,
+      "requests": 9,
+      "duration_s": 57.8,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "The pipeline script has been made robust and successfully executed. The summary.json file has been created with the following contents: {\"rows_processed\": 529, \"rows_skipped\": 71, \"total_amount\": 264542.4}. This matches the validation script's output, confirming correctness.",
+      "error": null,
+      "passed": true,
+      "detail": "4 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 57.8
+    },
+    {
+      "task": "data-sales-report",
+      "category": "data",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 8,
+      "tool_calls": 8,
+      "input_tokens": 43001,
+      "output_tokens": 3842,
+      "requests": 8,
+      "duration_s": 105.5,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "report.json has been created with the following contents:\n{\n  \"revenue_by_region\": {\n    \"North\": 677657.48,\n    \"Central\": 691383.95,\n    \"East\": 682288.87,\n    \"South\": 748768.2,\n    \"West\": 742362.31\n  },\n  \"top_product_q2\": \"Flange\",\n  \"best_month\": \"2025-03\",\n  \"valid_rows\": 2828,\n  \"skipped_rows\": 172\n}\nAll values have been verified against the script calculations and cross-checked.",
+      "error": null,
+      "passed": true,
+      "detail": "10 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 105.5
+    },
+    {
+      "task": "code-cli-todo",
+      "category": "coding",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 12,
+      "tool_calls": 12,
+      "input_tokens": 84606,
+      "output_tokens": 4808,
+      "requests": 12,
+      "duration_s": 124.5,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "Built todo.py and test_todo.py in the current directory. The todo manager correctly implements add, list, done, remove commands with persistent storage in todos.json. All unit tests pass.",
+      "error": null,
+      "passed": true,
+      "detail": "24 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 124.8
+    },
+    {
+      "task": "write-api-docs",
+      "category": "writing",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 5,
+      "tool_calls": 5,
+      "input_tokens": 24827,
+      "output_tokens": 1912,
+      "requests": 5,
+      "duration_s": 52.3,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "API.md has been created with the required structure and content. It documents the public API of geometry.py, including Overview, Installation, Usage (with a fenced Python code example), and API Reference subsections for each public function (area_circle, area_rectangle, distance, centroid, scale_polygon). Each subsection details parameters, return value, and exceptions.",
+      "error": null,
+      "passed": true,
+      "detail": "22 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 52.3
+    },
+    {
+      "task": "research-multihop",
+      "category": "research",
+      "difficulty": "medium",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 7,
+      "tool_calls": 7,
+      "input_tokens": 30887,
+      "output_tokens": 1284,
+      "requests": 7,
+      "duration_s": 96.3,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "Service: SessionVault, Team: Identity Platform team, Lead: Priya Raman, Retention days: 14",
+      "error": null,
+      "passed": true,
+      "detail": "4 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 96.3
+    },
+    {
+      "task": "ops-http-service",
+      "category": "web",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 12,
+      "tool_calls": 12,
+      "input_tokens": 69013,
+      "output_tokens": 3110,
+      "requests": 12,
+      "duration_s": 179.3,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "server.py has been created and tested. All endpoints behave as specified:\n- GET /health returns 200 with {\"status\": \"ok\"}\n- POST /sum with valid numbers returns 200 with {\"sum\": <sum>}\n- POST /sum with invalid JSON or missing/non-list numbers returns 400 with {\"error\": \"...\"}\n- Any other path returns 404 with {\"error\": \"Not found\"}\nAll responses have Content-Type: application/json.\nThe server was started on port 8080, tested with curl, and then stopped.",
+      "error": null,
+      "passed": true,
+      "detail": "8 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 179.5
+    },
+    {
+      "task": "hard-sessionize",
+      "category": "data",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 12,
+      "tool_calls": 12,
+      "input_tokens": 71004,
+      "output_tokens": 5024,
+      "requests": 12,
+      "duration_s": 120.0,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "Metrics computed: total_sessions=89, avg_session_seconds=2853.4, top_user=u002, long_sessions=76",
+      "error": null,
+      "passed": true,
+      "detail": "4 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 120.0
+    },
+    {
+      "task": "hard-bug-hunt",
+      "category": "debugging",
+      "difficulty": "hard",
+      "repeat": 1,
+      "state": "completed",
+      "stop_reason": "finished",
+      "turns": 16,
+      "tool_calls": 16,
+      "input_tokens": 102710,
+      "output_tokens": 13544,
+      "requests": 16,
+      "duration_s": 219.5,
+      "models": [
+        "nvidia/nemotron-3-super-120b-a12b"
+      ],
+      "verifications": 0,
+      "answer": "Fixed three bugs:\n1. ledger/money.py: to_cents used float arithmetic causing rounding errors (e.g., 0.29 \u2192 28 cents). Replaced with Decimal for exact conversion.\n2. ledger/report.py: total_usd used end-exclusive range (< end) despite docstring saying inclusive. Changed to <= end.\n3. ledger/fx.py: eur_to_usd_cents cached only one rate for all dates, ignoring the 'on' parameter. Changed to cache per date.\n\nAll changes are general fixes, not test-specific. The test now passes and the suite runs without errors.",
+      "error": null,
+      "passed": true,
+      "detail": "3 checks passed",
+      "delegated": false,
+      "compactions": 0,
+      "wall_s": 219.6
+    }
+  ]
+}
