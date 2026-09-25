@@ -1,6 +1,6 @@
 """Evaluation runner.
 
-    python -m evals.runner --model z-ai/glm-5.3 --tasks all --workers 3 --out evals/runs/glm53
+    python -m evals.runner --model z-ai/glm-5.3 --tasks core --workers 3 --out /tmp/runs/glm53
 
 Each task runs in a fresh workspace; the hidden verifier decides pass/fail.
 Writes ``results.json`` (every record) and ``report.md`` (summary tables).
@@ -142,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Polymath evaluation runner")
     ap.add_argument("--model")
     ap.add_argument("--utility-model")
-    ap.add_argument("--tasks", default="all", help="task ids and/or categories, comma-separated")
+    ap.add_argument("--tasks", default="core", help="core (default) | hard | all | categories | task ids, comma-separated")
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--repeat", type=int, default=1)
     ap.add_argument("--mode", choices=["full", "minimal"], default="full")
@@ -150,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--router", choices=["heuristic", "llm", "off"])
     ap.add_argument("--no-fallback", action="store_true")
     ap.add_argument("--context-window", type=int, help="override the model window (context-stress runs)")
+    ap.add_argument("--max-output-tokens", type=int, help="override the per-response output budget")
     ap.add_argument("--label", default="", help="free-text label stored in results (e.g. harness version)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
@@ -157,15 +158,19 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     over: dict[str, Any] = {"sessions_dir": str(out / "sessions"), "memory_path": str(out / "memory.jsonl"), "verbosity": 0}
-    for k, v in {"model": args.model, "utility_model": args.utility_model, "verify": args.verify_mode, "router": args.router, "context_window": args.context_window}.items():
+    for k, v in {"model": args.model, "utility_model": args.utility_model, "verify": args.verify_mode, "router": args.router, "context_window": args.context_window, "max_output_tokens": args.max_output_tokens}.items():
         if v:
             over[k] = v
     if args.no_fallback:
         over["fallback_models"] = []
     cfg = load_config(**over)
+    if args.max_output_tokens:  # an explicit override beats per-model defaults (e.g. GLM-5.3's 32k)
+        mp = {k: dict(v) for k, v in cfg.model_params.items()}
+        mp.setdefault(cfg.model, {})["max_output_tokens"] = args.max_output_tokens
+        cfg = cfg.replace(model_params=mp)
     rt = Runtime(cfg, console=False)
     tasks = select(args.tasks)
-    meta = {"label": args.label, "context_window": cfg.context_window, "router": cfg.router, "model": cfg.model, "mode": args.mode, "workers": args.workers, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "fallbacks": cfg.fallback_models, "utility_model": cfg.utility_model, "n_tasks": len(tasks), "repeat": args.repeat}
+    meta = {"label": args.label, "context_window": cfg.context_window, "max_output_tokens": cfg.max_output_for(cfg.model), "router": cfg.router, "model": cfg.model, "mode": args.mode, "workers": args.workers, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "fallbacks": cfg.fallback_models, "utility_model": cfg.utility_model, "n_tasks": len(tasks), "repeat": args.repeat}
     print(f"Running {len(tasks)} tasks × {args.repeat} on {cfg.model} (mode={args.mode}, workers={args.workers})", flush=True)
     jobs = [(t, r) for r in range(1, args.repeat + 1) for t in tasks]
     records: list[dict[str, Any]] = []

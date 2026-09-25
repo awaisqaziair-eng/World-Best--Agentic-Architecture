@@ -49,9 +49,36 @@ class ConsoleRenderer:
         lines = self.render(e)
         if lines:
             with self._lock:
+                self._clear_progress()
                 for line in lines:
                     self.stream.write(line + "\n")
                 self.stream.flush()
+
+    # ── streaming heartbeat ─────────────────────────────────────────────
+    _progress_shown = False
+    _last_plain_progress = 0.0
+
+    def progress(self, agent: str, chunks: int, seconds: float) -> None:
+        """Show that a long generation is alive (TTY: one self-overwriting line; logs: every 30 s)."""
+        if self.verbosity <= 0:
+            return
+        pad = "    " * agent.count(".")
+        with self._lock:
+            if self.stream.isatty():
+                self.stream.write(f"\r{pad}  {self.c(f'… generating ({chunks:,} chunks, {seconds:.0f}s)', 'dim')}\033[K")
+                self._progress_shown = True
+            elif seconds - self._last_plain_progress >= 30:
+                self._last_plain_progress = seconds
+                self.stream.write(f"{pad}  … still generating ({chunks:,} chunks, {seconds:.0f}s)\n")
+            else:
+                return
+            self.stream.flush()
+
+    def _clear_progress(self) -> None:
+        if self._progress_shown:
+            self.stream.write("\r\033[K")
+            self._progress_shown = False
+        self._last_plain_progress = 0.0
 
     def render(self, e: Event) -> list[str]:
         depth = e.agent.count(".")

@@ -294,6 +294,8 @@ class Agent:
                 msgs = self.context.prepare(self.log, self.agent_id, self.system, specs, force_compact=force_compact)
                 est = self.context.last_estimate
                 req = ChatRequest(messages=[self.system, *msgs], tools=specs, purpose="agent")
+                if self.rt.console is not None:
+                    req.on_progress = lambda n, secs, _a=self.agent_id: self.rt.console.progress(_a, n, secs)
                 t0 = time.time_ns()
                 try:
                     resp = self.client.complete(req)

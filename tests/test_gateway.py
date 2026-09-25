@@ -239,6 +239,33 @@ class TestStreaming(unittest.TestCase):
         c, _ = client(t, stream=True)
         self.assertEqual(c.complete(REQ).attempts, 3)
 
+    def test_progress_callback_fires_and_cannot_break_request(self):
+        import itertools
+
+        ticks: list[tuple[int, float]] = []
+        clock = itertools.count(0.0, 1.5)  # each chunk "takes" 1.5 s of monotonic time
+
+        def slow_lines():
+            for c in sse(*[{"choices": [{"delta": {"content": "x"}}]} for _ in range(6)]):
+                yield c
+
+        c, _ = client(Seq([(200, {}, slow_lines())]), stream=True)
+        import polymath.gateway.openai_compat as oc
+
+        real = oc.time.monotonic
+        oc.time.monotonic = lambda: next(clock)
+        try:
+            def cb(n, s):
+                ticks.append((n, s))
+                raise RuntimeError("renderer bug")  # must be swallowed
+
+            r = c.complete(ChatRequest(messages=[Message("user", "hi")], on_progress=cb))
+        finally:
+            oc.time.monotonic = real
+        self.assertEqual(r.content, "xxxxxx")
+        self.assertGreaterEqual(len(ticks), 2)
+        self.assertEqual(ChatRequest(messages=[Message("user", "hi")], on_progress=cb).fingerprint(), ChatRequest(messages=[Message("user", "hi")]).fingerprint())
+
     def test_sse_bytes_and_plain_json_both_accepted(self):
         body = b"".join(sse({"choices": [{"delta": {"content": "from bytes"}}]}))
         c, _ = client(Seq([(200, {}, body), (200, {}, ok_body({"content": "plain"}))]), stream=True)

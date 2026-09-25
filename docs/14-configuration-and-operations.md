@@ -120,7 +120,7 @@ print(res.state, res.stop_reason, res.answer, res.usage.total)
 |---|---|
 | Provider outage mid-run | Run ends `failed/model_error`; after recovery: `polymath resume <session>`. With fallbacks configured the run usually fails over automatically. |
 | Process killed / machine rebooted | `polymath resume <session>`; the torn last event line is repaired; interrupted tool calls re-run (at-least-once). |
-| 429s / slow responses | Normal on shared endpoints; retries with jittered backoff absorb them. Reduce concurrency (fewer parallel sessions / sub-agents). |
+| 429s / slow responses | Normal on shared endpoints; retries with jittered backoff absorb them. Reduce concurrency (fewer parallel sessions / sub-agents): concurrent long generations share the account's token throughput (measured: ~60 → ~10 tokens/s per stream at ~9 concurrent GLM-5.3 streams). |
 | Model lacks native tool calling | Automatic downgrade to text protocol, or force with `--protocol text` / `model_params.<m>.tool_protocol = "text"`. |
 | Context-length errors | Automatic compaction + retry; lower `context_window` if a model's real window is smaller than configured. |
 | Runaway command | Per-command timeout escalation; the agent sees a `[TIMEOUT …]` footer. |

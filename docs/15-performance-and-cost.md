@@ -58,6 +58,7 @@ With the v1 GLM-5.3 figures (1.18 M input, 88 k output over 28 tasks) the median
 - Sessions are independent; one `Runtime` can run many concurrently (the eval runner uses a thread pool).
 - On a shared endpoint, concurrency raises per-call latency: 4 workers → p90 35 s vs single-session calls of 1–6 s in probes. Rate limits (429) are absorbed by jittered retries; 2 % of v1 calls needed a retry.
 - Sub-agents multiply concurrency (up to `max_parallel_subagents` per parent).
+- **Account throughput is shared across concurrent generations.** Measured on NIM with GLM-5.3: one uncontended stream ran at ~60 tokens/s; with ~9 concurrent GLM streams (several 10–30k-token reasoning turns on the hard tier) each stream dropped to ~10 tokens/s, and even trivial tasks waited 7+ minutes for their first response. Heavy-reasoning models amplify this: size concurrency to the endpoint's aggregate token rate, not to your CPU count.
 
 ## 6. Performance guidelines
 

@@ -186,7 +186,7 @@ class OpenAICompatClient:
     # ── main entry ──────────────────────────────────────────────────────
     def complete(self, request: ChatRequest) -> ModelResponse:
         url = f"{self.base_url}/chat/completions"
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        headers = {"Content-Type": "application/json", "Accept": "text/event-stream" if self.stream else "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         attempt = 0
@@ -204,7 +204,7 @@ class OpenAICompatClient:
             if status == 200:
                 try:
                     if not isinstance(raw, (bytes, bytearray)):
-                        return self._from_stream(raw, started, attempt + 1)
+                        return self._from_stream(raw, started, attempt + 1, request.on_progress)
                     # SSE may open with ": comment" keep-alive lines, so detect by any "data:" line.
                     if not raw.lstrip().startswith(b"{") and _SSE_LINE.search(raw):
                         return self._from_stream(raw.splitlines(), started, attempt + 1)
@@ -249,7 +249,9 @@ class OpenAICompatClient:
                 )
             self.sleep(self.backoff_delay(attempt, retry_after))
 
-    def _from_stream(self, lines: Iterable[bytes], started: float, attempts: int) -> ModelResponse:
+    def _from_stream(
+        self, lines: Iterable[bytes], started: float, attempts: int, on_progress: Callable[[int, float], None] | None = None
+    ) -> ModelResponse:
         """Assemble an OpenAI-style SSE stream into one response.
 
         Tool-call deltas are merged by ``index`` (the id and name arrive once, the
@@ -265,9 +267,19 @@ class OpenAICompatClient:
         model = self.model
         resp_id = None
         got_any = False
+        n_chunks = 0
+        next_tick = time.monotonic() + 2.0
         for raw in lines:
-            if time.monotonic() > deadline:
+            now = time.monotonic()
+            if now > deadline:
                 raise TransportError(f"generation exceeded max_request_s={self.max_request_s:.0f}s")
+            n_chunks += 1
+            if on_progress is not None and now >= next_tick:
+                next_tick = now + 2.0
+                try:
+                    on_progress(n_chunks, now - started)
+                except Exception:
+                    pass  # progress reporting must never break a request
             line = raw.decode("utf-8", "replace").strip() if isinstance(raw, (bytes, bytearray)) else str(raw).strip()
             if not line or line.startswith(":") or not line.startswith("data:"):
                 continue

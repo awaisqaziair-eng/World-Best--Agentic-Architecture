@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Callable, Protocol, runtime_checkable
 
 from .. import jsonutil
 from ..types import Message, ModelResponse
@@ -18,6 +18,8 @@ class ChatRequest:
     tool_choice: str | dict[str, Any] | None = None
     seed: int | None = None
     purpose: str = "agent"  # agent | compaction | judge | router | workflow
+    # Streaming progress callback: (chunks_received, seconds_elapsed). Not part of the fingerprint.
+    on_progress: Callable[[int, float], None] | None = field(default=None, repr=False, compare=False)
 
     def fingerprint(self) -> str:
         """Content hash used by record/replay to detect divergence."""
