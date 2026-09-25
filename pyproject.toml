@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "polymath-agent"
+version = "1.0.0"
+description = "Polymath: a generalist agent harness — event-sourced, resumable, replayable, with a persistent terminal."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []  # standard library only, by design (ADR-006)
+
+[project.scripts]
+polymath = "polymath.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["polymath*"]
+
+[tool.setuptools.package-data]
+polymath = ["skills/*/SKILL.md"]

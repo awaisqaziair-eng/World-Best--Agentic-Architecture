@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polymath.dev/spec/span.schema.json",
+  "title": "Span (OTLP-shaped JSON line in trace.jsonl)",
+  "type": "object",
+  "properties": {
+    "traceId": {"type": "string", "minLength": 32, "maxLength": 32},
+    "spanId": {"type": "string", "minLength": 16, "maxLength": 16},
+    "parentSpanId": {"type": "string"},
+    "name": {"type": "string", "description": "'invoke_agent <id>' | 'chat <model>' | 'execute_tool <tool>'"},
+    "startTimeUnixNano": {"type": "integer"},
+    "endTimeUnixNano": {"type": ["integer", "null"]},
+    "attributes": {
+      "type": "object",
+      "properties": {
+        "gen_ai.operation.name": {"type": "string", "enum": ["invoke_agent", "chat", "execute_tool"]}
+      },
+      "required": ["gen_ai.operation.name"]
+    },
+    "status": {"type": "object", "properties": {"code": {"type": "string", "enum": ["OK", "ERROR"]}, "message": {"type": "string"}}}
+  },
+  "required": ["traceId", "spanId", "name", "startTimeUnixNano", "attributes", "status"]
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polymath.dev/spec/tool-call.schema.json",
+  "title": "ToolCall",
+  "type": "object",
+  "properties": {
+    "id": {"type": "string", "minLength": 1, "description": "Unique within the assistant message; pairs the call with its result."},
+    "name": {"type": "string"},
+    "arguments": {"type": "object", "description": "Parsed (and possibly repaired) JSON arguments."},
+    "raw_arguments": {"type": ["string", "null"], "description": "Original argument text, kept only when parsing failed."},
+    "parse_error": {"type": ["string", "null"], "description": "Set when arguments could not be recovered; the registry returns a corrective error result."}
+  },
+  "required": ["id", "name", "arguments"]
+}

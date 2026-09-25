@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polymath.dev/spec/task.schema.json",
+  "title": "TaskSpec",
+  "description": "A unit of work submitted to an agent. Immutable once submitted (recorded in the task.submitted event).",
+  "type": "object",
+  "properties": {
+    "id": {"type": "string", "description": "Stable task id (task_<hex>)."},
+    "instruction": {"type": "string", "minLength": 1, "description": "What to do, in natural language."},
+    "workspace": {"type": "string", "description": "Absolute path of the working directory the agent acts in."},
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}, "description": "Checked by the model judge when the agent calls finish."},
+    "verify_command": {"type": ["string", "null"], "description": "Shell command that must exit 0 for the result to be accepted."},
+    "context": {"type": ["string", "null"], "description": "Extra context from the requester (e.g. a parent agent's brief)."},
+    "budget": {"$ref": "#/$defs/Budget"},
+    "metadata": {"type": "object"}
+  },
+  "required": ["id", "instruction", "workspace", "budget"],
+  "$defs": {
+    "Budget": {
+      "type": "object",
+      "description": "Hard ceilings enforced by the kernel before every turn.",
+      "properties": {
+        "max_turns": {"type": "integer", "minimum": 1},
+        "max_tokens": {"type": "integer", "minimum": 1},
+        "max_wall_s": {"type": "number", "minimum": 1},
+        "max_tool_calls": {"type": "integer", "minimum": 1}
+      },
+      "required": ["max_turns", "max_tokens", "max_wall_s", "max_tool_calls"]
+    }
+  }
+}

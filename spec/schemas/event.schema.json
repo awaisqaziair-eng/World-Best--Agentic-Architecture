@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polymath.dev/spec/event.schema.json",
+  "title": "Event",
+  "description": "One line of a session's events.jsonl. The log is append-only; seq is dense and strictly increasing per session.",
+  "type": "object",
+  "properties": {
+    "seq": {"type": "integer", "minimum": 1},
+    "ts": {"type": "number", "description": "Unix time, seconds (microsecond precision)."},
+    "type": {
+      "type": "string",
+      "enum": [
+        "session.started", "task.submitted", "task.state", "message.user",
+        "model.request", "model.response", "model.error", "tool.result",
+        "context.cleared", "context.compacted", "plan.updated", "verification.result",
+        "subagent.spawned", "subagent.finished", "workflow.step.started", "workflow.step.completed",
+        "task.completed", "harness.note"
+      ]
+    },
+    "agent": {"type": "string", "description": "Agent id: 'main', sub-agents 'main.1', 'main.1.2', workflow agents 'wf.<step>.<n>'."},
+    "data": {"type": "object", "description": "Type-specific payload; see docs/04-harness-specification.md §Event catalogue."}
+  },
+  "required": ["seq", "ts", "type", "agent", "data"],
+  "additionalProperties": false
+}

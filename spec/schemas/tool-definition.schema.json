@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polymath.dev/spec/tool-definition.schema.json",
+  "title": "Tool definition (OpenAI function-tool wire shape)",
+  "type": "object",
+  "properties": {
+    "type": {"const": "function"},
+    "function": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 64},
+        "description": {"type": "string", "minLength": 20, "description": "When to use it, what it returns, its limits. Written for the model."},
+        "parameters": {"type": "object", "description": "JSON Schema (object) for the arguments."}
+      },
+      "required": ["name", "description", "parameters"]
+    }
+  },
+  "required": ["type", "function"]
+}
