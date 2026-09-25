@@ -34,7 +34,7 @@ Two capabilities that plug into the prebuilt harness rather than replacing it.
 - \+ The loss is recoverable and measured: a run reports how often the model had to go back for something.
 - \+ Composable: all four behaviours are harness capabilities, and every flag can be turned off.
 - − More moving parts in the context path. Each has offline tests (11, driving a real agent with scripted models).
-- − Each stub costs **≈ 65–75 tokens** (measured on typical `read_file` stubs). A first draft measured 112 tokens, mostly a long handle printed twice; handles are now `ev/<run-id tail>/<n>`. Results under `min_result_tokens` (250) are never evicted, because it wouldn't pay.
+- − Each stub costs **≈ 75–90 tokens** with the default 3-line tail (measured on typical `read_file`, report and `pytest` stubs; ≈ 65–75 with a 1-line tail). A first draft measured 112 tokens, mostly a long handle printed twice; handles are now `ev/<run-id tail>/<n>`. Results under `min_result_tokens` (250) are never evicted, because it wouldn't pay.
 
 ## Evidence ([R6](../research/06-retention.md), n = 2 per cell, nemotron-3-ultra, 16 k window)
 

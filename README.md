@@ -133,7 +133,7 @@ polymath/            v1: the agent & harness (stdlib only)
   memory/ observability/ skills/   BM25 store · tracer & console · 7 built-in playbooks
   v2/                v2: Coder composition + swaps (terminal, recall, ledger), CLI   [extra: v2]
   egress/            egress governor: OpenAI-compatible rate-governing proxy       [extra: egress]
-tests/               155 deterministic tests (no network; v2/egress tests skip without the extras)
+tests/               160 deterministic tests (no network; v2/egress tests skip without the extras)
 evals/               36 live tasks with hidden verifiers (28 core, 6 hard, 2 retention), runner,
                      and backends for deepagents, Pydantic AI Coder, OpenAI Agents SDK, v2 + ablations
 research/            terminal bake-off harness, SDK probes, raw results

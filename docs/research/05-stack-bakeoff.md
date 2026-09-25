@@ -28,8 +28,9 @@ Two exceptions to rule 1, both applied to make the comparison *about the harness
 ## 3. Protocol
 
 - Core suite: 28 tasks, 11 categories, hidden deterministic verifiers ([13](../13-evaluation-and-testing.md)).
-- 2 workers per stack, all four stacks concurrently. Repeat 1 is complete for every stack before repeat 2 starts.
-- **Budget decision.** The account sustained about 0.4–0.5 req/s, which made two repeats for four stacks a ~9-hour run. Each stack is stopped after repeat 1 (28 trials), to free the budget for the v2 and retention experiments. With one repeat, per-task differences are anecdotal; only large aggregate differences are meaningful (§6).
+- **Decision dataset (`nemotron-3-ultra`):** Coder and v2 with 2 workers each (two repeats); deepagents, the Agents SDK and v1 with 1 worker each (one repeat), all through one governor.
+- **Secondary dataset (`nemotron-3-super`):** 2 workers per stack, four stacks concurrently; stopped during the provider degradation (§4, §5.3).
+- **Budget decision.** The account sustained roughly 0.1–0.5 req/s per model under load, so repeats were spent where they discriminate: two repeats for the Coder-vs-v2 pair, one for the other stacks. With one repeat, per-task differences are anecdotal; only large aggregate differences are meaningful (§7).
 
 ## 4. Infrastructure incidents during the run (all disclosed)
 

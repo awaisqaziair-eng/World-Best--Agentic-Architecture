@@ -83,8 +83,8 @@ stateDiagram-v2
     Recalled --> Pinned: pin 8 turns (16 if the item faulted before)
     Pinned --> Live: pin expires
     note right of Evicted
-        stub ≈ 70 tokens: tool, args, size,
-        first/last line, handle.
+        stub ≈ 75–90 tokens: tool, args, size, exit,
+        first line, last 3 lines, handle.
         Full text in the OverflowStore.
     end note
 ```
@@ -97,6 +97,7 @@ stateDiagram-v2
 | `V2Options(addressable)` | `True` | `False` = same eviction policy with the irreversible placeholder (the H1 control arm) |
 | `V2Options(context_window)` / `POLYMATH_V2_CONTEXT_WINDOW` / `--context-window` | per-model table (`polymath/config.py`) | An explicit value also applies to Coder's clearing, so all arms work under equal pressure |
 | Eviction trigger / target / keep / min size / pin | 0.5 / 0.3 / 4 pairs / 250 tokens / 8 turns | `RecallableEviction` fields |
+| Stub tail preview | 3 lines, harness footers stripped | `stub_tail_lines` (R6 F5) |
 | Spill threshold | 24,000 chars (preview 1,000) | `SPILL_OVER_CHARS` |
 | Model endpoint | `POLYMATH_BASE_URL` → NIM | the egress governor for shared accounts |
 
