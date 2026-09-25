@@ -39,9 +39,9 @@ flowchart LR
 
 **Admission: FIFO token bucket.** `reserve()` hands out slots `1/R` apart, in call order, so ordering is fair and no request starves.
 
-**AIMD.** The same control law TCP uses to share a bottleneck it can't observe directly:
+**AIMD, made loss-tolerant (§4).** The control law TCP uses to share a bottleneck it can't observe directly, with one correction learned on NIM:
 - success: `R ← min(R_max, R + α)`;
-- throttle signal (429, 503, in-body overload text): `R ← max(R_min, R·β)`, **at most once per `cooldown_s`**.
+- throttle signal (429, 503, in-body overload text): `R ← max(R_min, R·β)`, **at most once per `cooldown_s`**, and only when recent throttling looks load-induced (§4).
 
 The cooldown is essential. Eight in-flight requests that all hit the same congestion episode return eight 429s, and without it they would cut R by β⁸. With it they are counted as one signal. `Retry-After` pauses admission for **everyone**, because the limit it reports is account-wide.
 
@@ -57,7 +57,7 @@ After commit, errors pass through unchanged. The client has consumed data, and r
 
 **Observable.** `GET /__governor/stats` returns counters and the current rate. The optional JSONL log records, per request: model, the status of every attempt, queue wait, outcome and duration.
 
-Defaults: `rate=0.5/s`, `α=0.02`, `β=0.6`, `cooldown_s=10`, `max_inflight=8`, `max_attempts=10`, `deadline_s=900`, idle timeout 300 s. All are CLI flags.
+Defaults: `rate=0.5/s`, `α=0.02`, `β=0.6`, `cooldown_s=10`, `throttle_window=40`, `decrease_above=0.35`, `min_rate=0.1`, `max_inflight=8`, `max_attempts=10`, `deadline_s=900`, idle timeout 300 s. All are CLI flags.
 
 ## 3. Evidence (live, four-stack bake-off on one NIM account)
 
@@ -75,7 +75,30 @@ Snapshot about 45 minutes into the R5 bake-off: 4 stacks × 2 workers = 8 concur
 
 Before the governor, the same load pattern lost whole tasks to 429s. Since it went in, no task in the bake-off has failed for infrastructure reasons (R5 reports the final numbers).
 
-## 4. Limits and honest caveats
+## 4. Correction: plain AIMD misread the provider, and the data showed it
+
+The first version cut the rate on **every** throttle signal (once per cooldown), which is textbook AIMD. About three hours into the bake-off the data contradicted the assumption behind it:
+
+- The rate had fallen to its floor, **0.05–0.09 req/s (about 4 requests/min)**, far below any plausible account limit, **and 429s kept coming**.
+- The share of requests throttled did not respond to our rate: **18 %** at ~0.5 req/s early in the run, **22 %** at ~0.07 req/s later.
+- Correlating 429s with our own concurrency (estimated from the request log, 752 first attempts) showed the **opposite** of what load-induced throttling predicts:
+
+| Our requests in flight when an attempt started | 0 | 1 | 2 | 3 | 4 | 5 | 6–7 |
+|---|---|---|---|---|---|---|---|
+| Share of attempts answered 429 | **66 %** (n=29) | 12 % (190) | 8 % (195) | 5 % (191) | 5 % (84) | 5 % (43) | 0 % (20) |
+
+Median upstream time was 2.1 s (p90 9.6 s). So the account was never close to a concurrency limit either. The in-flight estimate is approximate, and part of the 66 % is reverse causality: after throttles, fewer of our requests are in flight. Even so, the data rules out "our load causes the 429s". They are **provider-side capacity throttling** for this model, the same condition that produces NIM's in-body "Service temporarily overloaded". Cutting our rate in response did nothing except cut our throughput by about 8×.
+
+This is a known pitfall in network congestion control: loss that isn't caused by congestion (e.g. wireless loss) must not trigger multiplicative decrease, which is why BBR-style controllers don't treat background loss as a congestion signal. The corrected rule (`AimdLimiter.on_throttle`):
+
+- every attempt's outcome goes into a sliding window of the last `throttle_window` = 40 attempts;
+- a throttle cuts the shared rate, and lets `Retry-After` pause everyone, **only if** the window's throttle fraction is ≥ `decrease_above` = 35 % (with at least 10 samples). Congestion we cause makes most requests beyond the limit fail, so the fraction jumps. Background throttling holds a steady lower fraction;
+- below the threshold, a throttle only delays **its own** request (exponential backoff, honouring `Retry-After`) and is retried as before;
+- the floor rose from 0.05 to 0.1 req/s.
+
+Tests pin both regimes (`test_background_throttling_does_not_cut_the_rate`, `test_burst_of_throttles_is_one_congestion_signal`). The governor was swapped for the corrected version during the bake-off, at 02:16:18 container time; §3's numbers are from the first version. Trials that overlapped the swap are audited in R5.
+
+## 5. Limits and honest caveats
 
 - **It trades latency for completion.** Queueing replaces failing. Under a hard account limit that is the right trade for batch and agent work, but a latency-critical interactive product would want priority classes. They aren't implemented.
 - **Throughput is capped by the account.** The governor finds the limit; it can't raise it. The R5 bake-off takes hours because about 0.4–0.7 req/s is what this account sustains.

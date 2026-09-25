@@ -9,7 +9,7 @@
 
 ## Decision
 Run an OpenAI-compatible reverse proxy, the **egress governor**, between every agent stack and the provider:
-- FIFO token-bucket admission at a rate adjusted by AIMD, with **one decrease per congestion episode** (a cooldown window) and a global pause on `Retry-After`.
+- FIFO token-bucket admission at a rate adjusted by **loss-tolerant** AIMD: one decrease per congestion episode (a cooldown window), and only when the recent throttle fraction shows the throttling is ours (≥ 35 % of the last 40 attempts). A global pause on `Retry-After` applies in that case only. Plain AIMD was tried first and failed on real data: it drove the rate to 4 requests/min against provider-side throttling that didn't respond to our load ([R4 §4](../research/04-egress-governor.md)).
 - Retry before commit: 429, 5xx, connection errors, an idle timeout before the first byte, and an error as the first SSE event or the body of a 200 are all retried while nothing has reached the client. After the first forwarded byte, errors pass through untouched.
 - The last real error is returned when attempts or the deadline run out. An unretryable in-body error becomes an explicit 503.
 - Clients change only `base_url` (`POLYMATH_BASE_URL`).

@@ -14,10 +14,17 @@ else changes, so LangChain, deepagents, Pydantic AI and Polymath get identical i
 behaviour. That is what makes cross-stack comparisons fair.
 
 1. **Admission.** A FIFO token bucket at rate R (requests/s), plus a cap on requests in flight.
-2. **AIMD.** Each success adds ``alpha`` to R. A throttle signal (429, 503, in-body overload)
-   multiplies R by ``beta``, at most once per ``cooldown_s``: a burst of 429s caused by one
-   congestion episode is ONE signal, not N. ``Retry-After`` pauses admission for everyone,
-   because the limit it describes is account-wide.
+2. **Loss-tolerant AIMD.** Each success adds ``alpha`` to R. A throttle signal (429, 503,
+   in-body overload) cuts R by ``beta`` ONLY when the throttle fraction over the last
+   ``throttle_window`` attempts is at least ``decrease_above``, and at most once per
+   ``cooldown_s``. Plain AIMD treats every 429 as congestion we caused. Measured on NIM, that
+   is false: 429s kept arriving at 4 req/min, and were *more* frequent with nothing of ours in
+   flight (66 %) than with 3–5 requests in flight (5 %). They were provider-side capacity
+   throttling, and plain AIMD drove throughput to its floor for nothing. Congestion we cause
+   shows up as a high refusal fraction; background throttling as a steady low one, which BBR-
+   style congestion control likewise refuses to read as congestion. Below the threshold a
+   throttle only delays its own request (backoff, honouring ``Retry-After``). Above it,
+   ``Retry-After`` also pauses admission for everyone, because the limit is then ours.
 3. **Retry before commit.** 429, 5xx, connection errors and an error as the first stream event
    are retried while nothing has been sent to the client. Once the first byte is forwarded the
    response is committed, and later errors pass through untouched. Nothing is ever duplicated.
@@ -33,6 +40,7 @@ import os
 import random
 import re
 import time
+from collections import deque
 from dataclasses import asdict, dataclass, field
 from email.utils import parsedate_to_datetime
 from typing import Any, Callable
@@ -55,11 +63,14 @@ class GovernorConfig:
     upstream: str = "https://integrate.api.nvidia.com/v1"
     mount: str = "/v1"  # client path prefix that maps onto `upstream`
     rate: float = 0.5  # initial admission rate, requests/s
-    min_rate: float = 0.05
+    min_rate: float = 0.1
     max_rate: float = 5.0
     alpha: float = 0.02  # additive increase per success, requests/s
     beta: float = 0.6  # multiplicative decrease per congestion episode
     cooldown_s: float = 10.0  # one decrease per window
+    throttle_window: int = 40  # recent attempts used to judge whether throttling is load-induced
+    decrease_above: float = 0.35  # throttle fraction at/above which throttling is treated as ours
+    min_samples: int = 10  # don't judge on fewer attempts than this
     max_inflight: int = 8
     max_attempts: int = 10
     deadline_s: float = 900.0  # total time a request may spend retrying before the last error is returned
@@ -102,6 +113,15 @@ class AimdLimiter:
         self._lock = asyncio.Lock()
         self.inflight = asyncio.Semaphore(cfg.max_inflight)
         self.decreases = 0
+        self._outcomes: deque[bool] = deque(maxlen=cfg.throttle_window)  # True = throttled
+
+    @property
+    def throttle_fraction(self) -> float:
+        return sum(self._outcomes) / len(self._outcomes) if self._outcomes else 0.0
+
+    @property
+    def load_induced(self) -> bool:
+        return len(self._outcomes) >= self.cfg.min_samples and self.throttle_fraction >= self.cfg.decrease_above
 
     def reserve(self) -> float:
         """Claim the next admission slot; returns the absolute time it opens (FIFO by call order)."""
@@ -123,9 +143,14 @@ class AimdLimiter:
                 return self.clock() - start
 
     def on_success(self) -> None:
+        self._outcomes.append(False)
         self.rate = min(self.cfg.max_rate, self.rate + self.cfg.alpha)
 
     def on_throttle(self, retry_after: float | None = None) -> None:
+        """Record a throttle; cut the shared rate only if throttling looks load-induced."""
+        self._outcomes.append(True)
+        if not self.load_induced:
+            return  # background throttling: the request's own backoff handles it
         now = self.clock()
         if retry_after:
             self._paused_until = max(self._paused_until, now + retry_after)
@@ -189,7 +214,8 @@ class Governor:
             self._log.close()
 
     async def _stats(self, _request: web.Request) -> web.Response:
-        body = asdict(self.stats) | {"rate_rps": round(self.limiter.rate, 4), "inflight_cap": self.cfg.max_inflight}
+        body = asdict(self.stats) | {"rate_rps": round(self.limiter.rate, 4), "inflight_cap": self.cfg.max_inflight,
+                                     "throttle_fraction": round(self.limiter.throttle_fraction, 3), "load_induced": self.limiter.load_induced}
         return web.json_response(body)
 
     # ── proxy ───────────────────────────────────────────────────────────
@@ -320,7 +346,8 @@ class Governor:
         return out
 
     def _finish(self, rec: dict[str, Any], t0: float, attempts: int, outcome: str, resp: web.StreamResponse) -> web.StreamResponse:
-        rec.update(attempts=attempts, outcome=outcome, duration_s=round(time.monotonic() - t0, 3), rate_rps=round(self.limiter.rate, 4))
+        rec.update(attempts=attempts, outcome=outcome, duration_s=round(time.monotonic() - t0, 3), rate_rps=round(self.limiter.rate, 4),
+                   throttle_fraction=round(self.limiter.throttle_fraction, 3))
         if self._log:
             self._log.write(json.dumps(rec) + "\n")
             self._log.flush()

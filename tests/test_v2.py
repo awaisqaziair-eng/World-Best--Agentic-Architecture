@@ -246,6 +246,25 @@ class V2AgentEndToEndTest(unittest.TestCase):
 
 
 @unittest.skipIf(Agent is None, "v2 extras not installed")
+class CliTest(unittest.TestCase):
+    def test_cli_runs_a_task_and_reports_telemetry(self):
+        import contextlib
+        import io
+        from unittest import mock
+
+        import polymath.v2.__main__ as cli
+
+        model = scripted([call("bash", {"command": "echo from-cli"}, "c1"), lambda m: [TextPart("finished")]])
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch("polymath.v2.agent.build_model", return_value=model), contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            self.assertEqual(cli.main(["task", "--workspace", tempfile.mkdtemp(), "-v"]), 0)
+        self.assertIn("finished", out.getvalue())
+        self.assertIn("▶ bash", err.getvalue())
+        self.assertIn("[exit code: 0", err.getvalue())
+        self.assertIn("reacquisitions 0", err.getvalue())
+
+
+@unittest.skipIf(Agent is None, "v2 extras not installed")
 class StateLedgerTest(unittest.TestCase):
     def test_silent_until_lossy(self):
         ws = Path(tempfile.mkdtemp())

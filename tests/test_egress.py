@@ -74,7 +74,8 @@ class GovernorProxyTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.seen[0]["auth"], "Bearer k")
         self.assertEqual(self.gov.stats.retries, 0)
 
-    async def test_retries_429_and_decreases_rate(self):
+    async def test_retries_429_and_decreases_rate_when_load_induced(self):
+        self.gov.limiter.cfg.min_samples = 1
         self.script = [("json", 429, {"status": 429}, {"Retry-After": "0"}), ("json", 200, GOOD)]
         rate0 = self.gov.limiter.rate
         r = await self.post()
@@ -152,15 +153,28 @@ class GovernorProxyTest(unittest.IsolatedAsyncioTestCase):
 class AimdLimiterTest(unittest.TestCase):
     def setUp(self):
         self.now = 100.0
-        self.lim = AimdLimiter(GovernorConfig(rate=2.0, min_rate=0.5, max_rate=3.0, alpha=0.5, beta=0.5, cooldown_s=10.0), clock=lambda: self.now)
+        self.lim = AimdLimiter(GovernorConfig(rate=2.0, min_rate=0.5, max_rate=3.0, alpha=0.5, beta=0.5, cooldown_s=10.0, throttle_window=10, min_samples=4, decrease_above=0.35), clock=lambda: self.now)
 
     def test_fifo_slots_are_spaced_at_rate(self):
         slots = [self.lim.reserve() for _ in range(3)]
         self.assertEqual(slots, [100.0, 100.5, 101.0])
 
+    def test_background_throttling_does_not_cut_the_rate(self):
+        # Measured on NIM: 429s at a steady low fraction regardless of our load. Only backoff, no rate cut.
+        for _ in range(4):
+            for _ in range(4):
+                self.lim.on_success()
+            self.lim.rate = 2.0
+            self.lim.on_throttle(retry_after=30.0)
+        self.assertLess(self.lim.throttle_fraction, 0.35)
+        self.assertEqual(self.lim.decreases, 0)
+        self.assertEqual(self.lim.rate, 2.0)
+        self.assertLess(self.lim.reserve(), 101.0)  # and no global pause either
+
     def test_burst_of_throttles_is_one_congestion_signal(self):
         for _ in range(5):
             self.lim.on_throttle()
+        self.assertTrue(self.lim.load_induced)
         self.assertEqual(self.lim.rate, 1.0)
         self.assertEqual(self.lim.decreases, 1)
         self.now += 10.0
@@ -174,8 +188,9 @@ class AimdLimiterTest(unittest.TestCase):
             self.lim.on_success()
         self.assertEqual(self.lim.rate, 3.0)
 
-    def test_retry_after_pauses_everyone(self):
-        self.lim.on_throttle(retry_after=30.0)
+    def test_retry_after_pauses_everyone_when_load_induced(self):
+        for _ in range(4):
+            self.lim.on_throttle(retry_after=30.0)
         self.assertGreaterEqual(self.lim.reserve(), 130.0)
 
 

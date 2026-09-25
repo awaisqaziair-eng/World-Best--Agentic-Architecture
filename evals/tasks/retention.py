@@ -110,7 +110,8 @@ TOKEN_AUDIT = EvalTask(
         "and only the first one issued is valid, so do not run it again.\n"
         "2. For each service listed in services.txt, run `python3 tools/metrics_report.py <service>` and read its "
         "SUMMARY section to get the day's p99 latency.\n"
-        "3. Write report.json as {\"token\": \"<the token from step 1>\", \"p99_ms\": {\"<service>\": <int>, ...}}."
+        # Braces doubled: the runner str.format()s instructions whose setup returns context.
+        "3. Write report.json as {{\"token\": \"<the token from step 1>\", \"p99_ms\": {{\"<service>\": <int>, ...}}}}."
     ),
     setup=token_setup,
     verify=token_verify,
