@@ -10,7 +10,18 @@
 | **Adaptive profile selection** | Minimal harness is cheaper on simple tasks with strong models | Router picks `minimal` toolset for low-complexity tasks; full set otherwise; measure pass/tokens on both tiers |
 | **macOS support for the terminal** | `/proc`-based descendant tracking is Linux-only | `pgrep -P` / `ps -o pid,ppid` fallback |
 
-## Later (v2)
+## v2: implemented (see [18](18-v2-architecture.md))
+
+"v2" became the re-platform onto a prebuilt SDK, the Pydantic AI harness, with Polymath's measured enhancements swapped in. Several items that used to sit on this roadmap now come prebuilt: MCP (a Pydantic AI capability), OpenTelemetry instrumentation (native), and cost accounting (`genai-prices`).
+
+| Next for v2 | Why |
+|---|---|
+| **ADR-011 and defaults from data** | Choose the foundation and the context defaults from R5 and the retention arms, not from design intent |
+| **PTY session tool (opt-in)** | Interactive programs (REPLs, prompts). The Agents SDK's `write_stdin` idea, kept off by default so accidental prompts still fail fast (R3) |
+| **Upstream reports** | File the reproducible SDK defects (R1 D1–D10) with their reproductions |
+| **LangChain adapter for the Polymath tiers** | `RecallableEviction` / `StateLedger` as LangChain middleware, so the enhancements aren't tied to one SDK |
+
+## Later
 
 | Item | Why |
 |---|---|

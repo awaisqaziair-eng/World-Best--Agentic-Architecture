@@ -1,6 +1,8 @@
 # 11 — Model Gateway
 
 > Status: **Implemented** · Code: `polymath/gateway/` · Tests: `tests/test_gateway.py`, `tests/test_workflow_and_chaos.py::TestChaos`
+>
+> **Shared accounts:** per-client retries (below) can't coordinate across clients or see errors that arrive inside a 200. Run the [egress governor](research/04-egress-governor.md) in front of the endpoint ([ADR-012](adr/ADR-012-egress-governor.md)). It adds account-wide, per-model, loss-tolerant rate control and retry-before-commit. The gateway's own retries stay in place as a second layer.
 
 The gateway makes an unreliable, heterogeneous set of model endpoints look like one reliable function: `complete(ChatRequest) → ModelResponse | ModelError`.
 

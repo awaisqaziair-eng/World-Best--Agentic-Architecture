@@ -1,6 +1,6 @@
 # 07 — Terminal Subsystem
 
-> Status: **Implemented** · Code: `polymath/tools/terminal.py` · Decision: [ADR-001](adr/ADR-001-terminal-as-primary-actuator.md) · Tests: `tests/test_tools.py::TestPersistentShell`
+> Status: **Implemented; carried into v2** ([ADR-013](adr/ADR-013-keep-polymath-terminal.md), 14/14 in the six-shell bake-off [R3](research/03-terminal-bakeoff.md)) · Code: `polymath/tools/terminal.py`, `polymath/v2/terminal.py` · Decision: [ADR-001](adr/ADR-001-terminal-as-primary-actuator.md) · Tests: `tests/test_tools.py::TestPersistentShell`
 
 ## 1. Should an agent have a terminal? — Yes, as its primary actuator.
 
@@ -39,9 +39,9 @@ sequenceDiagram
     alt marker seen
         S-->>T: output, exit code, new cwd
     else timeout
-        S->>P: SIGINT (only processes created by THIS command) · wait 3 s
-        S->>P: SIGTERM · wait 2 s
-        S->>P: SIGKILL · wait 2 s
+        S->>P: SIGINT (only processes created by THIS command) · wait 3 s (0.5 s if there are none)
+        S->>P: SIGTERM · wait 2 s (0.5 s if none)
+        S->>P: SIGKILL · wait 2 s (0.5 s if none)
         S->>B: still no marker → kill shell, start new one in last cwd
         S-->>T: partial output, timed_out, restarted?
     else EOF (shell exited, e.g. `exit 3`)
@@ -60,7 +60,7 @@ sequenceDiagram
 | **Per-agent scratch dir + nonce in script names** | Parallel sub-agents never collide. (A real race found by the delegation test and fixed.) |
 | **`start_new_session=True`** | The shell is isolated from the harness's process group and terminal signals. |
 | **Descendant snapshot before each command** | Timeouts signal only processes *this* command created; a server started earlier with `nohup … &` survives. |
-| **Escalation SIGINT → SIGTERM → SIGKILL → shell replacement** | Graceful first (lets programs clean up), certain in the end (even a builtin busy-loop `while true; do :; done` is handled by replacing the shell). |
+| **Escalation SIGINT → SIGTERM → SIGKILL → shell replacement** | Graceful first (lets programs clean up), certain in the end (even a builtin busy-loop `while true; do :; done` is handled by replacing the shell). When a step has no child process to signal, the shell itself is busy and waiting can't help, so that step's grace drops to 0.5 s. The v2 bake-off measured 9 s before this change and 3.5 s after it, for a 2 s timeout ([R3](research/03-terminal-bakeoff.md) §6). |
 | **Hermetic environment** | `TERM=dumb`, `PAGER=cat`, `GIT_PAGER=cat`, `GIT_EDITOR=true`, `GIT_TERMINAL_PROMPT=0`, `PYTHONUNBUFFERED=1`, `PIP_PROGRESS_BAR=off`, `DEBIAN_FRONTEND=noninteractive`, `NO_COLOR=1`, UTF-8 locale; harness credentials (`*_API_KEY`, `*_TOKEN`, `*_SECRET`) are not inherited — the agent's shell gets only what the task needs. |
 | **Bounded capture** | 2 MB frozen head + 2 MB rolling tail; the middle is counted and dropped. A 30 MB flood is processed in 0.33 s with ~4 MB resident. |
 | **Output hygiene** | ANSI/OSC escape stripping; `\r` progress bars collapsed to their final state; invalid UTF-8 replaced. |
