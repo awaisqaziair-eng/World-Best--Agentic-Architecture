@@ -15,6 +15,6 @@
 | ADR-011 | v2 foundation: which prebuilt SDK | Pending the R5 stack bake-off |
 | [ADR-012](ADR-012-egress-governor.md) | Govern the account's rate below every SDK (egress governor) | Accepted |
 | [ADR-013](ADR-013-keep-polymath-terminal.md) | Keep Polymath's terminal in v2; replace the prebuilt shells | Accepted |
-| [ADR-014](ADR-014-recallable-eviction-and-ledger.md) | Addressable eviction + machine-derived state ledger | Accepted for experimentation |
+| [ADR-014](ADR-014-recallable-eviction-and-ledger.md) | Addressable eviction + machine-derived state ledger (the size floor turned out to be the load-bearing part, R6) | Accepted |
 
 Format: Context → Decision → Alternatives considered → Consequences → Evidence.

@@ -1,6 +1,6 @@
 # ADR-014 — Make evicted context addressable, and keep a machine-derived state ledger
 
-**Status:** Accepted for experimentation (the retention results decide the defaults) · **Date:** 2026-09-25 · Research: [R2](../research/02-context-management-literature.md) · Code: `polymath/v2/recall.py`, `polymath/v2/ledger.py`
+**Status:** Accepted (evidence below; refinements in progress) · **Date:** 2026-09-25 · Research: [R2](../research/02-context-management-literature.md) · Code: `polymath/v2/recall.py`, `polymath/v2/ledger.py`
 
 ## Context
 - **The prebuilt eviction is irreversible.** The best prebuilt context toolkit (Pydantic AI harness) replaces old tool results with `[tool result cleared]`, and its own README says the persisted run "does not recover what the receipt says was dropped". `Spill` is lossless, but only for results that were large *when produced*.
@@ -35,4 +35,11 @@ Two capabilities that plug into the prebuilt harness rather than replacing it.
 - \+ Composable: all four behaviours are harness capabilities, and every flag can be turned off.
 - − More moving parts in the context path. Each has offline tests (11, driving a real agent with scripted models).
 - − Each stub costs **≈ 65–75 tokens** (measured on typical `read_file` stubs). A first draft measured 112 tokens, mostly a long handle printed twice; handles are now `ev/<run-id tail>/<n>`. Results under `min_result_tokens` (250) are never evicted, because it wouldn't pay.
-- **Open:** whether H1/H2 improve task outcomes, or only reduce reacquisition, is what `evals/tasks/retention.py` measures (arms: `polymath-v2-clear`, `-recall`, full `polymath-v2`, and Coder's own clearing under the same window). The defaults stay provisional until those numbers are in.
+
+## Evidence ([R6](../research/06-retention.md), n = 2 per cell, nemotron-3-ultra, 16 k window)
+
+- **The eviction *policy* made the difference; recoverability did not change a pass rate here.** Coder's prebuilt clearing failed `ret-token-audit` **0/2**: it cleared an 11-token service list, and the model invented three services, the same three in both repeats. Every Polymath-policy arm (irreversible, addressable, addressable + ledger) passed **4/4**. The reason is the size floor: results under 250 tokens are never evicted.
+- **Why addressability didn't matter for pass rates:** Pydantic AI sends reasoning back, and the model had noted the facts it needed in its reasoning, which no tier evicts. When the model *hadn't* noted values, recall by handle rescued the run (both repeats), at 2.4× the tokens.
+- **The ledger** made the rename task the cheapest v2 run (its file list answered the task's question with no re-reading). On the token task it coincided with 7 recalls per run instead of 0, plausibly invited by its closing hint.
+
+**Status after the evidence:** accepted. The size floor is the load-bearing part. Addressable eviction stays on as the safety net for un-noted facts and non-idempotent tools. Stub previews (3-line tail) and the ledger's recall hint are being refined against R6's transcripts.
