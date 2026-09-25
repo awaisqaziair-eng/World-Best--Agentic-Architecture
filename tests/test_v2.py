@@ -183,6 +183,25 @@ class RecallableEvictionTest(unittest.TestCase):
         asyncio.run(ctrl.after_tool_execute(_Ctx(), call=again, tool_def=None, args={}, result="..."))
         self.assertEqual(ctrl.stats.re_reads, 1)  # reacquisition is still measured in the control arm
 
+    def test_reapplies_stub_if_original_text_comes_back(self):
+        msgs = _history(8, 2_000)
+        once = self.compact(msgs)
+        n, batches = self.tier.stats.evictions, self.tier.stats.eviction_batches
+        again = self.compact(msgs)  # the ORIGINAL history again, as if edits had not persisted
+        rets = lambda out: [str(p.content) for m in out if isinstance(m, ModelRequest) for p in m.parts if isinstance(p, ToolReturnPart)]
+        self.assertEqual(rets(again), rets(once))
+        self.assertEqual((self.tier.stats.evictions, self.tier.stats.eviction_batches), (n, batches))  # no double counting
+
+    def test_runs_without_ids_never_share_handles(self):
+        class NoId:
+            run_id = None
+        a = asyncio.run(self.tier.for_run(NoId()))
+        b = asyncio.run(self.tier.for_run(NoId()))
+        ha = re.search(r"handle '([^']+)'", str(asyncio.run(a.compact(_history(8, 2_000), NoId()))[2].parts[0].content)).group(1)
+        hb = re.search(r"handle '([^']+)'", str(asyncio.run(b.compact(_history(8, 2_000), NoId()))[2].parts[0].content)).group(1)
+        self.assertNotEqual(ha, hb)
+        self.assertEqual(len(self.tier.history), 2)
+
     def test_thrashing_enlarges_the_working_set(self):
         before = self.tier.target_fraction
         for i in range(3):

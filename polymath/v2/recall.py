@@ -31,6 +31,7 @@ arXiv 2606.17016). Pairing is never broken: calls stay in place, and only the co
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -48,9 +49,17 @@ READ_ONLY_TOOLS = frozenset({"read_file", "grep", "list_files", "glob", "search_
 
 
 def estimate_tokens(messages: list[ModelMessage]) -> int:
-    """~4 characters per token over every part's text: deterministic and model-independent."""
+    """~4 characters per token over every part's text and per-request instructions.
+
+    Deterministic and model-independent. Tool schemas are sent with each request but are not
+    in the message list, so the estimate runs low by their size (≈ 1–3 k tokens for Coder's
+    tool set). Size the window with that in mind.
+    """
     chars = 0
     for msg in messages:
+        instructions = getattr(msg, "instructions", None)
+        if isinstance(instructions, str):
+            chars += len(instructions)
         for part in msg.parts:
             content = getattr(part, "content", None)
             if content is not None:
@@ -127,7 +136,9 @@ class RecallableEviction(AbstractCapability[Any]):
     _live_sigs: dict[str, str] = field(default_factory=dict, init=False, repr=False)
     _pinned_until: dict[str, int] = field(default_factory=dict, init=False, repr=False)
     _fault_turns: list[int] = field(default_factory=list, init=False, repr=False)
+    _stubs: dict[str, str] = field(default_factory=dict, init=False, repr=False)  # tool_call_id → stub text
     _turn: int = field(default=0, init=False, repr=False)
+    _tag: str = field(default="", init=False, repr=False)  # per-run handle namespace
 
     def __post_init__(self) -> None:
         if not 0 < self.target_fraction < self.trigger_fraction <= 1:
@@ -136,6 +147,9 @@ class RecallableEviction(AbstractCapability[Any]):
     async def for_run(self, ctx: RunContext[Any]) -> RecallableEviction:
         run = replace(self)  # re-runs __post_init__ and resets every init=False field
         run.history = self.history
+        # A run id's random TAIL (a UUIDv7's head is a timestamp, so it can collide across concurrent
+        # runs); a random tag if the run has no id, so runs never share handles in a shared store.
+        run._tag = (getattr(ctx, "run_id", None) or uuid.uuid4().hex)[-8:]
         self.history.append(run.stats)
         return run
 
@@ -194,12 +208,18 @@ class RecallableEviction(AbstractCapability[Any]):
         protected = {p.tool_call_id for p in returns[len(returns) - self.keep_pairs :]} if self.keep_pairs else set()
         excess = estimate_tokens(messages) - int(self.target_fraction * self.context_window)
         replacements: dict[str, str] = {}
+        new_evictions = 0
         for part in returns:
             if excess <= 0:
                 break
             cid = part.tool_call_id
             call = calls[cid]
             text = part.content if isinstance(part.content, str) else json.dumps(part.content, default=str)
+            if cid in self._stubs and text != self._stubs[cid]:
+                # Evicted before, but the original is back (edits did not persist): re-apply, idempotently.
+                replacements[cid] = self._stubs[cid]
+                excess -= (len(text) - len(self._stubs[cid])) // 4
+                continue
             if (
                 cid in protected
                 or cid in self._evicted
@@ -211,14 +231,16 @@ class RecallableEviction(AbstractCapability[Any]):
                 continue
             sig = call_signature(call.tool_name, call.args_as_dict())
             if self.addressable:
-                # Short handle, since every stub pays for it: the run id's random TAIL (a UUIDv7's head is a
-                # timestamp, so it can collide across concurrent runs) plus a per-run counter.
-                handle = await self.store.write(f"ev/{(ctx.run_id or 'run')[-8:]}/{len(self._by_handle) + 1}", text.encode("utf-8"))
+                tag = self._tag or (getattr(ctx, "run_id", None) or uuid.uuid4().hex)[-8:]
+                self._tag = tag
+                # Short handle, since every stub pays for it: per-run tag + counter.
+                handle = await self.store.write(f"ev/{tag}/{len(self._by_handle) + 1}", text.encode("utf-8"))
                 stub = _stub(handle, call, text)
                 self._by_handle[handle] = cid
             else:
                 handle, stub = "", CLEARED_PLACEHOLDER
             self._evicted[cid] = _Evicted(handle, sig, call.tool_name)
+            self._stubs[cid] = stub
             self._evicted_sigs[sig] = cid
             self._live_sigs.pop(sig, None)
             replacements[cid] = stub
@@ -226,9 +248,11 @@ class RecallableEviction(AbstractCapability[Any]):
             excess -= saved
             self.stats.evictions += 1
             self.stats.evicted_tokens += saved
+            new_evictions += 1
         if not replacements:
             return messages
-        self.stats.eviction_batches += 1
+        if new_evictions:
+            self.stats.eviction_batches += 1
         out: list[ModelMessage] = []
         for msg in messages:
             if isinstance(msg, ModelRequest) and any(type(p) is ToolReturnPart and p.tool_call_id in replacements for p in msg.parts):
