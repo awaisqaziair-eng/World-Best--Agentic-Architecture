@@ -39,7 +39,7 @@ Tasks (verifiers self-tested both ways, 36/36):
 ### 4.1 The prebuilt tier cleared an 11-token plan, and the model hallucinated (2 of 2)
 In both failing runs the model read `services.txt` (44 characters: six service names) and ran the first three services correctly. Then `ClearToolResults` cleared everything but the last three pairs, **including that tiny result**, and the model continued with **the same three invented names** in both repeats (`notifications`, `orders`, `payments`; the real ones are `checkout`, `search`, `notify`). It never re-read the file. Polymath's policy never evicts results under 250 tokens, because clearing them saves almost nothing, so in all 12 v2-policy runs the list stayed in context.
 
-**Finding F1.** *Which* results are evicted matters more than whether an evicted result can be recovered. A size floor is a one-line fix with a large effect, and the prebuilt tier doesn't have one.
+**Finding F1.** *Which* results are evicted matters more than whether an evicted result can be recovered. A size floor is a one-line fix with a large effect, and the prebuilt tier doesn't have one. (Lineage: Polymath v1's clearing has had the same kind of floor from the start, `clear_min_chars=1200` in `polymath/context/engine.py`; v2's floor carries it over. R6 is the first measurement of what it is worth.)
 
 *Caveat.* `metrics_report.py` accepts any service name, so the hallucination failed silently. A real tool that rejects unknown names would give the model a chance to notice. The task makes this failure as quiet as it can be.
 
