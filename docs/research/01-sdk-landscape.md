@@ -50,7 +50,7 @@ Documentation answers neither reliably: docs describe intent, and defaults decid
 | Planning | ✅ `TodoListMiddleware` | ✅ opt-in | ✅ `Planning` (survives compaction) | ❌ not found |
 | Shell tool (R3, 14 scenarios) | 7/14 | 9/14 | 10/14 (`Shell`) · 10/14 (`Coder`) | 7/14, plus a cwd bug |
 | Trajectory self-evaluation | ❌ | ⚠ rubric grading (beta) *(doc)* | ✅ `TrajectoryJudge` | ❌ (guardrails are policy, not quality) |
-| MCP | adapter package | adapter package | ✅ capability | ✅ `mcp_servers` |
+| MCP | adapter package *(doc; not installed here)* | adapter package *(doc)* | ✅ capability | ✅ `mcp_servers` |
 | Observability | LangSmith (installed: langsmith 0.14.0) | same | ✅ native OpenTelemetry | tracing processors (default exporter: OpenAI) |
 
 ## 4. Defects and hazards found (each reproducible)

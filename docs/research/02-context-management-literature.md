@@ -69,12 +69,12 @@ Most shipped harnesses optimise the second cost and measure only task completion
 | Summarisation | `SummarizingCompaction` (incremental, receipts, pin) | Pure *generation*: no guaranteed-exact state |
 | Recall over history | `ConversationSearch` (BM25) | Similarity search, not exact addressing (ARC's point) |
 | Pinning | `pin()` | Manual; no fault feedback (Pichay) |
-| Cache economics | `min_clear_tokens` | A threshold, not a cost model; not batch-scheduled (TokenPilot) |
+| Cache economics | `ClearToolResults` clears everything but the last `keep_pairs` in **one** persisted edit (already batched, in TokenPilot's sense) + `min_clear_tokens` | No cost model: *whether* an edit pays for its cache write is a fixed threshold |
 | Measuring reacquisition | none | Every SDK reports tokens; none reports re-fetches |
 
 ## 4. Design hypotheses for Polymath v2 (to be tested, not asserted)
 
-Each hypothesis fills one gap in §3, is implementable as a `CompactionStrategy` tier inside Pydantic AI's `TieredCompaction` (or as LangChain middleware), and states a falsifiable prediction.
+Each hypothesis fills one gap in §3, is implementable as a `CompactionStrategy` tier inside Pydantic AI's `TieredCompaction` (or as LangChain middleware), and states a falsifiable prediction. **Implementation status:** H1, H3 and H5 are `polymath/v2/recall.py`; H2 is `polymath/v2/ledger.py`; H4 was downgraded (below). The experiments are `evals/tasks/retention.py`.
 
 **H1: Addressable eviction.** When an old tool result is evicted, replace it with a stub carrying a stable handle into the session's append-only event log (`⟨evicted r:17 · read_file src/app.py · 212 lines · recall("r:17")⟩`), plus a bounded `recall(handle, offset, limit, pattern)` tool. This is ARC applied at *eviction* time, which Spill does not cover. *Prediction:* same pass rate as irreversible clearing, with fewer **re-executions** (re-running a command or re-reading a file that changed) and a correct answer where re-execution would give a different result.
 
@@ -89,7 +89,7 @@ The generated summary carries only the narrative. *Prediction:* fewer post-compa
 
 **H3: Fault-driven pinning with thrash control.** Every `recall` of an evicted handle, and every re-execution of an identical read, counts as a **page fault** against that item. A faulted item is pinned for *k* turns. A fault rate above a threshold triggers a larger working set, and the event is logged as thrashing. *Prediction:* lower reacquisition than LRU-by-age eviction at the same window budget.
 
-**H4: Batched, cache-economic eviction.** Evict only in batches at turn boundaries, only when the expected saving over the remaining turns exceeds the cost of re-writing the cache suffix after the edit point:
+**H4: Batched, cache-economic eviction.** *(Downgraded after reading the source: the prebuilt clearing is already batched; see the §3 correction. Only the cost model below would be new, which is a marginal refinement. Not implemented; `RecallableEviction` uses the same one-edit-per-episode batching plus a low watermark.)* Evict only in batches at turn boundaries, only when the expected saving over the remaining turns exceeds the cost of re-writing the cache suffix after the edit point:
 
 `Δtokens × E[remaining requests] > suffix_tokens_after_edit × cache_write_premium`
 

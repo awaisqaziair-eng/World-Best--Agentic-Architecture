@@ -211,7 +211,9 @@ class RecallableEviction(AbstractCapability[Any]):
                 continue
             sig = call_signature(call.tool_name, call.args_as_dict())
             if self.addressable:
-                handle = await self.store.write(f"{ctx.run_id or 'run'}/evicted/{cid}", text.encode("utf-8"))
+                # Short handle, since every stub pays for it: the run id's random TAIL (a UUIDv7's head is a
+                # timestamp, so it can collide across concurrent runs) plus a per-run counter.
+                handle = await self.store.write(f"ev/{(ctx.run_id or 'run')[-8:]}/{len(self._by_handle) + 1}", text.encode("utf-8"))
                 stub = _stub(handle, call, text)
                 self._by_handle[handle] = cid
             else:
@@ -237,16 +239,14 @@ class RecallableEviction(AbstractCapability[Any]):
 
 
 def _stub(handle: str, call: ToolCallPart, text: str) -> str:
-    """What the model keeps: enough to decide WHETHER to recall, and exactly how."""
+    """What the model keeps: enough to decide WHETHER to recall, and exactly how (~75 tokens)."""
     args = json.dumps(call.args_as_dict(), default=str)
-    if len(args) > 160:
-        args = args[:157] + "..."
+    if len(args) > 120:
+        args = args[:117] + "..."
     lines = text.splitlines() or [""]
-    first = lines[0][:120]
-    last = lines[-1][:120] if len(lines) > 1 else ""
-    tail = f" · last: {last!r}" if last else ""
+    first = lines[0][:80]
+    last = f" · last: {lines[-1][:80]!r}" if len(lines) > 1 else ""
     return (
-        f"{STUB_PREFIX}{handle!r}: {call.tool_name}({args}) → {len(lines)} lines, {len(text):,} chars"
-        f" · first: {first!r}{tail}. Recover the exact text with read_tool_result(handle={handle!r}); "
-        f"use `pattern`, `offset`, `limit` or `from_end` to read only what you need.]"
+        f"{STUB_PREFIX}{handle!r}: {call.tool_name}({args}) · {len(lines)} lines, {len(text):,} chars · first: {first!r}{last}."
+        f" Exact text: read_tool_result(handle={handle!r}); optional pattern, offset, limit, from_end.]"
     )
