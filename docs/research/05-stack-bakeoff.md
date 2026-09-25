@@ -42,7 +42,21 @@ Two exceptions to rule 1, both applied to make the comparison *about the harness
 
 ## 5. Results
 
-*Filled from `results.json` when repeat 1 completes for every stack.*
+### 5.1 Paired comparison on `nemotron-3-ultra`: prebuilt Coder vs Polymath v2 (core suite, 28 tasks, 1 repeat)
+
+| | Pass | Median tokens/task | Total tokens | Median turns |
+|---|---|---|---|---|
+| `pydanticai-coder` (as shipped) | 25/28 | 21.0 k | 1,157 k | 6 |
+| `polymath-v2` (Coder + terminal + recall tier + ledger) | **26/28** | 22.0 k | **908 k** | 6 |
+
+- **Parity on ordinary tasks.** One discordant task out of 28; 26 vs 25 is not a significant difference. Both failed `code-cli-todo` and `write-exec-summary`.
+- The discordant task, `git-feature-flow`: Coder's run left an untracked `__pycache__/` in the repository ("working tree clean" failed). Polymath's terminal runs every command with `PYTHONDONTWRITEBYTECODE=1` (plus non-interactive pagers and git prompts), a systematic hygiene difference, not luck. One task, and a strict criterion, so it is a mechanism, not a headline.
+- **Tokens: mixed.** Total −22 % for v2 but median per-task ratio 1.14 (interquartile range 0.87–1.44): a few large tasks dominate the total.
+- The core suite rarely stresses context (v2 evicted nothing on most tasks), so this measures "no harm on ordinary work". The retention experiments (R6) measure where the swaps matter.
+
+### 5.2 Four-stack table on `nemotron-3-super`
+
+*Filled when repeat 1 completes for every stack.*
 
 ## 6. Threats to validity
 

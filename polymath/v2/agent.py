@@ -42,7 +42,7 @@ class V2Options:
     recall: bool = True
     ledger: bool = True
     addressable: bool = True  # False: same eviction policy, irreversible placeholder (the H1 control arm)
-    stub_tail_lines: int = 1  # lines of each evicted result's tail shown in its stub
+    stub_tail_lines: int = 3  # lines of each evicted result's tail shown in its stub (R6 §6)
     # None → per-model default for Polymath's tiers, and Coder's clearing keeps its own resolution.
     # Set explicitly (a stress regime), it applies to Coder's ClearToolResults too, so every arm
     # works under the same pressure.

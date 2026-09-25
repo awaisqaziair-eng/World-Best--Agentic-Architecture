@@ -129,10 +129,10 @@ class RecallableEviction(AbstractCapability[Any]):
     store: OverflowStore = field(default_factory=LocalFileStore)
     exclude_tools: frozenset[str] = frozenset({READ_TOOL})
     addressable: bool = True  # False = control arm: identical policy, irreversible placeholder (isolates H1)
-    # Non-empty lines from the END of the result shown in the stub. Summaries and errors live at the end
-    # (the terminal keeps tails for the same reason); a 1-line tail showed `END` and hid `p99_ms = 304`
-    # three lines above it, which made the model recall whole reports (retention transcripts, R6).
-    stub_tail_lines: int = 1
+    # Non-empty lines from the END of the result shown in the stub (harness footers excluded). Summaries and
+    # errors live at the end. Measured (R6 §6): 1 line showed `END` and hid `p99_ms = 304` above it, so the model
+    # recalled every report; 3 lines cut recalls 7 → 1 and tokens 520k → ~230k, all passes kept.
+    stub_tail_lines: int = 3
     history: list[RecallStats] = field(default_factory=list, repr=False)  # one entry per run, for evals
 
     # per-run state (fresh in for_run)
@@ -269,8 +269,8 @@ class RecallableEviction(AbstractCapability[Any]):
         return out
 
 
-def _stub(handle: str, call: ToolCallPart, text: str, *, tail_lines: int = 1) -> str:
-    """What the model keeps: enough to decide WHETHER to recall, and exactly how (~70 tokens at tail_lines=1)."""
+def _stub(handle: str, call: ToolCallPart, text: str, *, tail_lines: int = 3) -> str:
+    """What the model keeps: enough to decide WHETHER to recall, and exactly how (~70–90 tokens)."""
     args = json.dumps(call.args_as_dict(), default=str)
     if len(args) > 120:
         args = args[:117] + "..."
@@ -288,7 +288,9 @@ def _stub(handle: str, call: ToolCallPart, text: str, *, tail_lines: int = 1) ->
     tail = [ln.strip() for ln in body if ln.strip()][-max(1, tail_lines):]
     last = ""
     if tail:
-        last = f" · last: {tail[0][:80]!r}" if len(tail) == 1 else f" · last {len(tail)} lines: {' ⏎ '.join(tail)[:240]!r}"
+        # Truncate each line on its own: cutting the joined string would drop the FINAL line whenever an
+        # earlier one is long, which is exactly the line the preview exists to show.
+        last = f" · last: {tail[0][:80]!r}" if len(tail) == 1 else f" · last {len(tail)} lines: {' ⏎ '.join(ln[:80] for ln in tail)!r}"
     return (
         f"{STUB_PREFIX}{handle!r}: {call.tool_name}({args}) · {len(lines)} lines, {len(text):,} chars{exit_note} · first: {first!r}{last}."
         f" Exact text: read_tool_result(handle={handle!r}); optional pattern, offset, limit, from_end.]"

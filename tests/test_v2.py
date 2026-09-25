@@ -134,7 +134,7 @@ class RecallableEvictionTest(unittest.TestCase):
         self.assertIn("read_file", stub)
         self.assertIn("f0.txt", stub)
         self.assertIn("'line0 of f0'", stub)
-        self.assertIn("'last line of f0'", stub)
+        self.assertIn("last line of f0", stub)  # the final line survives even after a 2,000-char line
         handle = re.search(r"handle '([^']+)'", stub).group(1)
         self.assertEqual(asyncio.run(self.store.read(handle)).decode(), original)
 
@@ -149,8 +149,9 @@ class RecallableEvictionTest(unittest.TestCase):
 
         report = "METRICS REPORT\n" + "row\n" * 160 + "SUMMARY\n  p99_ms = 304\n  (note)\nEND"
         call_ = ToolCallPart("bash", {"command": "report auth"}, tool_call_id="c")
-        self.assertNotIn("p99_ms = 304", _stub("ev/x/1", call_, report))
+        self.assertNotIn("p99_ms = 304", _stub("ev/x/1", call_, report, tail_lines=1))
         self.assertIn("p99_ms = 304", _stub("ev/x/1", call_, report, tail_lines=3))
+        self.assertEqual(RecallableEviction().stub_tail_lines, 3)  # the default since R6 §6
         # The terminal's footer must not eat the preview (it did in the first live run of this arm).
         with_footer = report + "\n[exit code: 0 | 0.02s | cwd: /a/very/long/path/that/used/to/fill/the/preview/budget]"
         stub = _stub("ev/x/1", call_, with_footer, tail_lines=3)

@@ -224,7 +224,7 @@ def run_openai_agents(instruction: str, ws: Path, *, model: str, max_turns: int,
 
 
 # ── Polymath v2: Coder composition + measured replacements (polymath/v2/agent.py) ──
-def run_polymath_v2(instruction: str, ws: Path, *, model: str, max_turns: int, terminal: bool = True, recall: bool = True, ledger: bool = True, addressable: bool = True, stub_tail_lines: int = 1, **_: Any) -> BackendResult:
+def run_polymath_v2(instruction: str, ws: Path, *, model: str, max_turns: int, terminal: bool = True, recall: bool = True, ledger: bool = True, addressable: bool = True, stub_tail_lines: int = 3, **_: Any) -> BackendResult:
     """Same model factory, temperature and request limit as ``pydanticai-coder``: the only
     differences are the component swaps selected by the flags."""
     from pydantic_ai import UsageLimits
@@ -265,5 +265,6 @@ BACKENDS: dict[str, Callable[..., BackendResult]] = {
     # Retention arms (terminal on in all, so only context handling differs; see evals/tasks/retention.py):
     "polymath-v2-clear": lambda *a, **k: run_polymath_v2(*a, ledger=False, addressable=False, **k),  # H1 control
     "polymath-v2-recall": lambda *a, **k: run_polymath_v2(*a, ledger=False, **k),  # H1 (+H3)
-    "polymath-v2-tail3": lambda *a, **k: run_polymath_v2(*a, stub_tail_lines=3, **k),  # follow-up: 3-line tail previews
+    "polymath-v2-tail3": lambda *a, **k: run_polymath_v2(*a, stub_tail_lines=3, **k),  # R6 follow-up (now the default)
+    "polymath-v2-tail1": lambda *a, **k: run_polymath_v2(*a, stub_tail_lines=1, **k),  # the pre-R6 preview
 }

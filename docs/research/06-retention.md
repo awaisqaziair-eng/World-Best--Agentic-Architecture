@@ -70,13 +70,23 @@ On rename, the irreversible arm re-read 7 evicted files (identical `read_file` c
 |---|---|---|
 | Size floor on eviction | a v2 detail (`min_result_tokens=250`) | **Keep; the headline difference from the prebuilt tier** (F1, 2/2 vs 0/2) |
 | Addressable eviction (H1) | default on | **Keep, but reframe:** it doesn't raise pass rates when the model self-notes (F2); it is the safety net when the model *didn't* note something (4.3), and the only correct option for non-idempotent tools (F3) |
-| Stub preview | 1 tail line | test 3 lines (§6) |
-| Ledger (H2) | default on | keep; reword its recall hint (F4) |
+| Stub preview | 1 tail line | **3 tail lines, harness footers stripped** (F5: recalls 7 → 1, −55 % tokens) |
+| Ledger (H2) | default on | keep; the recall-hint hypothesis (F4) was refuted by F5, so no rewording |
 | R2 H1 prediction | "fewer lost-fact failures" | **not supported** on this model; failures came from *what* was evicted, not recoverability |
 
-## 6. Follow-up: 3-line tail preview (`polymath-v2-tail3`)
+## 6. Follow-up: 3-line tail preview (`polymath-v2-tail3`, full v2 otherwise)
 
-*Running. Filled in when complete.*
+The first run of this arm was **invalid**. Every `bash` result ends with the terminal's footer (`[exit code: 0 | 0.02s | cwd: /long/path]`), so the "last 3 lines" were the note, `END` and the footer, whose long path used up the preview budget, and the p99 line never appeared (7 recalls again, 528 k). Two fixes followed: stubs now drop harness footers before taking the tail (keeping a compact `exit N`), and each tail line is truncated on its own, so a long earlier line can't push out the final one (a unit test caught that second flaw). The invalid run is kept aside, labelled.
+
+Valid run:
+
+| Arm | Task | Pass | Turns | Tokens (k) | Evictions | Recalls |
+|---|---|---|---|---|---|---|
+| full v2, 1-line tail | token-audit | 2/2 | 18/18 | 520/520 | 7/7 | **7/7** |
+| full v2, **3-line tail** | token-audit | 2/2 | 12/11 | **240/225** | 6/5 | **1/1** |
+| full v2, 3-line tail | rename | 1/1 (r2 pending) | 17 | 134 | 12 | 0 |
+
+**Finding F5.** A stub that shows the lines where results keep their conclusions (the tail) cut recalls from 7 to 1 and tokens by ~55 %, with every pass kept. It also **refutes the F4 hypothesis** that the ledger's recall hint drove the recall storm. The ledger was present in both rows; what changed was whether the stub carried the needed line. **Default changed to 3 lines.**
 
 ## 7. Threats to validity
 
