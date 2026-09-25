@@ -240,6 +240,11 @@ def run_polymath_v2(instruction: str, ws: Path, *, model: str, max_turns: int, t
         res = agent.run_sync(f"{instruction}\n\nWorking directory: {ws}", usage_limits=UsageLimits(request_limit=max_turns), model_settings={"temperature": TEMPERATURE})
         u = res.usage
         out = BackendResult("completed", "finished", str(res.output), u.requests, u.input_tokens or 0, u.output_tokens or 0, time.monotonic() - t0)
+        # Full transcript OUTSIDE the workspace (verifiers inspect workspaces): runs/<out>/transcripts/<task>__rN.json.
+        # Needed to see WHY a context arm passed or failed, e.g. whether the model kept a fact in its own reasoning.
+        tdir = ws.parent.parent / "transcripts"
+        tdir.mkdir(parents=True, exist_ok=True)
+        (tdir / f"{ws.name}.json").write_bytes(res.all_messages_json())
     except Exception as e:
         out = BackendResult("failed", type(e).__name__, None, 0, 0, 0, time.monotonic() - t0, f"{type(e).__name__}: {str(e)[:400]}", {"trace": traceback.format_exc()[-800:]})
     if tel.recall_runs:
