@@ -84,7 +84,7 @@ Valid run:
 |---|---|---|---|---|---|---|
 | full v2, 1-line tail | token-audit | 2/2 | 18/18 | 520/520 | 7/7 | **7/7** |
 | full v2, **3-line tail** | token-audit | 2/2 | 12/11 | **240/225** | 6/5 | **1/1** |
-| full v2, 3-line tail | rename | 1/1 (r2 pending) | 17 | 134 | 12 | 0 |
+| full v2, 3-line tail | rename | 2/2 | 17/8 | 134/63 | 12/6 | 0/0 |
 
 **Finding F5.** A stub that shows the lines where results keep their conclusions (the tail) cut recalls from 7 to 1 and tokens by ~55 %, with every pass kept. It also **refutes the F4 hypothesis** that the ledger's recall hint drove the recall storm. The ledger was present in both rows; what changed was whether the stub carried the needed line. **Default changed to 3 lines.**
 
