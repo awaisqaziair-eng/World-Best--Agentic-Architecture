@@ -12,7 +12,7 @@
 | [ADR-008](ADR-008-exact-string-edits.md) | Exact-string file edits with closest-match errors | Accepted |
 | [ADR-009](ADR-009-measured-harness-overhead.md) | Harness features must pay for their tokens (v1.1 overhead reductions) | Accepted |
 | [ADR-010](ADR-010-streaming-idle-timeouts.md) | Stream every model call; idle timeouts instead of total timeouts | Accepted |
-| [ADR-011](ADR-011-v2-foundation.md) | v2 foundation: Pydantic AI + pydantic-ai-harness (deepagents runner-up; OpenAI Agents SDK rejected for NIM) | Accepted (R5 four-stack numbers being filled in) |
+| [ADR-011](ADR-011-v2-foundation.md) | v2 foundation: Pydantic AI + pydantic-ai-harness (deepagents runner-up; OpenAI Agents SDK rejected for NIM) | Accepted |
 | [ADR-012](ADR-012-egress-governor.md) | Govern the account's rate below every SDK (egress governor) | Accepted |
 | [ADR-013](ADR-013-keep-polymath-terminal.md) | Keep Polymath's terminal in v2; replace the prebuilt shells | Accepted |
 | [ADR-014](ADR-014-recallable-eviction-and-ledger.md) | Addressable eviction + machine-derived state ledger (the size floor turned out to be the load-bearing part, R6) | Accepted |

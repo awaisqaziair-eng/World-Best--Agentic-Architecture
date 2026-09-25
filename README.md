@@ -33,7 +33,12 @@ $ polymath run "Write primes.py that prints how many primes are below 1,000,000 
 | Rate limits | per-client retries | **egress governor** below every SDK: loss-tolerant AIMD, retry before commit ([R4](docs/research/04-egress-governor.md)) |
 | Run | `polymath run "…"` | `python -m polymath.v2 "…" --workspace DIR` |
 
-v2 is the answer to "don't build your own SDK; use prebuilt ones and enhance them". It was chosen by **auditing four prebuilt SDKs in source** (10 reproducible defects, [R1](docs/research/01-sdk-landscape.md)) and **benchmarking them on the same tasks, model and hidden verifiers** (R5, running). Every swap has an off switch, so each claimed gain is an ablation, not an anecdote. Start at [docs/18-v2-architecture.md](docs/18-v2-architecture.md) and [docs/research](docs/research/README.md).
+v2 is the answer to "don't build your own SDK; use prebuilt ones and enhance them". It was chosen by **auditing four prebuilt SDKs in source** (11 reproducible defects, [R1](docs/research/01-sdk-landscape.md)) and **benchmarking five stacks on the same tasks, model and hidden verifiers** ([R5](docs/research/05-stack-bakeoff.md)). Every swap has an off switch, so each claimed gain is an ablation, not an anecdote.
+
+**What the measurements say, briefly:**
+- **Ordinary tasks.** On the 28-task core suite, pass rates are indistinguishable across stacks: v2 = prebuilt Coder at 50/56 over two repeats. Cost spreads 2.5×, and v2 is cheapest (909 k tokens vs 2,282 k for v1).
+- **Where the swaps change outcomes.** Under context pressure the prebuilt clearing failed 2 of 4 retention runs by clearing a tiny, vital result, and v2 passed 4/4 ([R6](docs/research/06-retention.md)). On adversarial shell scenarios the terminal scores 14/14 vs 10/14 ([R3](docs/research/03-terminal-bakeoff.md)). On a shared rate-limited account the governor turns failures into queueing ([R4](docs/research/04-egress-governor.md)).
+- **What didn't hold up.** Addressable eviction didn't raise pass rates on this model, which keeps its own notes in its reasoning. The size floor did the work. Recorded as such in R6. Start at [docs/18-v2-architecture.md](docs/18-v2-architecture.md) and [docs/research](docs/research/README.md).
 
 ---
 

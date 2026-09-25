@@ -12,7 +12,7 @@ Build v2 on **Pydantic AI 2.49 + pydantic-ai-harness 0.34**, starting from the h
 
 | Criterion | LangChain / deepagents | **Pydantic AI + harness** | OpenAI Agents SDK |
 |---|---|---|---|
-| Task outcomes, core suite, `nemotron-3-super`, repeat 1 (R5 §5.2) | deepagents: see R5 table | Coder: see R5 table | see R5 table |
+| Task outcomes, core suite, `nemotron-3-ultra` (R5 §5.2) | deepagents 25/28 · 1,439 k tokens | **Coder 25/28 · 1,157 k**; v2 on it 26/28 · **909 k** (50/56 each over two repeats) | 23/28 · 1,516 k (one loss to D11) |
 | Context-engineering toolkit (R1 §3) | clearing, summarisation (offload in deepagents) | **the most complete**: clearing, dedup, clamping, incremental summarisation with receipts, tiered orchestrator, pinning, spill-with-handles, BM25 recall, step persistence | server-side compaction only (D9) |
 | Extension surface for Polymath's enhancements | middleware hooks | **capability hooks + `CompactionStrategy` tiers**; v2 swaps parts out of a *real* `Coder`, so every unswapped part is exactly as shipped | limited: sandbox capabilities, runner hooks |
 | Defects that affect autonomous runs on NIM (R1 §4) | D3 fake completions (config fix), D4 zero token counts (config fix), D6 170 k summarisation trigger above 128 k windows, D7/D8 shell | D5 in-body errors not retried (**fixed below the SDK** by the governor, ADR-012); D10 irreversible clearing (**fixed** by ADR-014's tier) | **D1 commands with `&` run in `/`**, D2 malformed tool arguments abort the run, D9 no client-side compaction, D11 an unregistered hosted tool call aborts the run |
@@ -20,9 +20,9 @@ Build v2 on **Pydantic AI 2.49 + pydantic-ai-harness 0.34**, starting from the h
 | Shell as shipped (R3) | 7/14 (LangChain), 9/14 (deepagents) | 10/14 (`Shell`), 10/14 (`Coder`) | 7/14 + D1 |
 
 ## Alternatives considered
-- **deepagents.** The strongest alternative. Its task outcomes are comparable (R5), and it brings LangGraph's durable checkpointing and a large ecosystem. It lost on two counts. First, its context toolkit is narrower, and its defaults for profile-less models (every NIM model) are unsafe (D6). Second, more of its defects sit *inside* the loop (D3, D4), where only configuration discipline, not a component swap, protects a deployment. Polymath's tiers could be ported to LangChain middleware (roadmap).
+- **deepagents.** The strongest alternative. Its pass rate is identical (25/28), at 24 % more tokens than Coder, and it brings LangGraph's durable checkpointing and a large ecosystem. It lost on two counts. First, its context toolkit is narrower, and its defaults for profile-less models (every NIM model) are unsafe (D6). Second, more of its defects sit *inside* the loop (D3, D4), where only configuration discipline, not a component swap, protects a deployment. Polymath's tiers could be ported to LangChain middleware (roadmap).
 - **OpenAI Agents SDK.** Rejected for NIM deployments. D1 writes to the filesystem root, D2 turns a single malformed tool call into a failed run, and compaction exists only where the server implements it.
-- **Stay on v1 (own stack).** Rejected by the mandate, and not supported by the evidence either: on the same model and tasks the prebuilt stacks matched or beat v1 (R5), and v1's distinctive strengths (terminal, verification discipline, event log) are carried into v2 as components.
+- **Stay on v1 (own stack).** Rejected by the mandate, and not supported by the evidence either: same pass rate (25/28) at **2.5× v2's tokens** (R5 §5.2). v1's distinctive strengths (terminal, size-floored clearing, event log) are carried into v2 as components.
 
 ## Consequences
 - \+ v2 inherits a maintained loop, model adapters, instrumentation (OpenTelemetry-native), MCP and durable-execution integrations without owning them.
