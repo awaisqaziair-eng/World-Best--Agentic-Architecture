@@ -31,7 +31,8 @@ from .framework import EvalTask  # noqa: E402
 from .tasks import select  # noqa: E402
 
 _print_lock = threading.Lock()
-STACK = "polymath-v1"  # set from --stack
+STACK = "polymath-v1"
+NO_WALL_BUDGET = False  # set from --stack
 
 
 def run_one(rt: Runtime, task: EvalTask, out: Path, rep: int, mode: str) -> dict[str, Any]:
@@ -65,7 +66,9 @@ def run_one(rt: Runtime, task: EvalTask, out: Path, rep: int, mode: str) -> dict
                 instruction,
                 ws,
                 acceptance_criteria=task.criteria,
-                budget=Budget(max_turns=task.max_turns, max_wall_s=task.max_wall_s, max_tokens=4_000_000, max_tool_calls=task.max_turns * 4),
+                # --no-wall-budget: the prebuilt stacks have no wall-clock budget, so under provider queueing a
+                # 900 s budget fails only v1 (defect 19). Stack comparisons use the same turn budget for all.
+                budget=Budget(max_turns=task.max_turns, max_wall_s=(10**9 if NO_WALL_BUDGET else task.max_wall_s), max_tokens=4_000_000, max_tool_calls=task.max_turns * 4),
                 mode=mode,
                 session_id=f"{task.id}__r{rep}",
             )
@@ -170,11 +173,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--context-window", type=int, help="override the model window (context-stress runs)")
     ap.add_argument("--max-output-tokens", type=int, help="override the per-response output budget")
     ap.add_argument("--label", default="", help="free-text label stored in results (e.g. harness version)")
+    ap.add_argument("--no-wall-budget", action="store_true", help="polymath-v1: no wall-clock budget (fair vs stacks without one)")
     ap.add_argument("--stack", default="polymath-v1", help="agent stack: polymath-v1 | deepagents | pydanticai-coder | openai-agents | polymath-v2")
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
-    global STACK
+    global STACK, NO_WALL_BUDGET
     STACK = args.stack
+    NO_WALL_BUDGET = args.no_wall_budget
 
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -191,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
         cfg = cfg.replace(model_params=mp)
     rt = Runtime(cfg, console=False)
     tasks = select(args.tasks)
-    meta = {"stack": args.stack, "label": args.label, "context_window": cfg.context_window, "max_output_tokens": cfg.max_output_for(cfg.model), "router": cfg.router, "model": cfg.model, "mode": args.mode, "workers": args.workers, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "fallbacks": cfg.fallback_models, "utility_model": cfg.utility_model, "n_tasks": len(tasks), "repeat": args.repeat}
+    meta = {"stack": args.stack, "label": args.label, "no_wall_budget": args.no_wall_budget, "context_window": cfg.context_window, "max_output_tokens": cfg.max_output_for(cfg.model), "router": cfg.router, "model": cfg.model, "mode": args.mode, "workers": args.workers, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "fallbacks": cfg.fallback_models, "utility_model": cfg.utility_model, "n_tasks": len(tasks), "repeat": args.repeat}
     print(f"Running {len(tasks)} tasks × {args.repeat} on {cfg.model} (mode={args.mode}, workers={args.workers})", flush=True)
     jobs = [(t, r) for r in range(1, args.repeat + 1) for t in tasks]
     records: list[dict[str, Any]] = []
